@@ -47,7 +47,7 @@ def login(
 
 @app.command()
 def logout():
-    """Se deconnecter (supprime le token stocke)."""
+    """Se deconnecter (supprime le token stocke)"""
     if clear_token():
         typer.echo("Deconnexion reussie.")
     else:

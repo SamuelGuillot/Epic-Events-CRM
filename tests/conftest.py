@@ -1,5 +1,4 @@
 import pytest
-from datetime import date
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -8,19 +7,21 @@ from src.models import Base, User, Client, Department
 
 @pytest.fixture
 def session():
+    """Crée une base SQLite en mémoire, isolée pour chaque test."""
     engine = create_engine("sqlite:///:memory:")
     Base.metadata.create_all(engine)
 
     Session = sessionmaker(bind=engine)
     session = Session()
 
-    yield session 
+    yield session
 
     session.close()
 
 
 @pytest.fixture
-def user_sam(session):
+def sam(session):
+    """Crée un utilisateur 'sam' pour les tests."""
     from src.utils.security import hash_password
 
     user = User(
@@ -33,3 +34,10 @@ def user_sam(session):
     session.add(user)
     session.commit()
     return user
+
+@pytest.fixture
+def auth_service(session):
+    """Retourne une instance d'AuthService liée à la session de test."""
+    from src.services.auth import AuthService
+
+    return AuthService(session)

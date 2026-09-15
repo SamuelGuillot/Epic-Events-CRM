@@ -5,7 +5,7 @@ from src.utils.security import create_jwt, hash_password, verify_password, save_
 
 
 def generate_employee_number(compteur):
-    """Génère un numéro d'employé au format EMP001, EMP002, etc."""
+    """Génère un numéro d'employé au format EMP001"""
     return "EMP" + str(compteur).zfill(3)
 
 

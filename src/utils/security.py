@@ -39,10 +39,11 @@ def create_jwt(user_id, email):
 def decode_jwt(token):
     return jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
 
-ph = PasswordHasher()
-
 def hash_password(password):
     """Transforme un mot de passe en clair en un hash sécurisé."""
+    
+    ph = PasswordHasher()
+
     return ph.hash(password)
 
 
@@ -52,6 +53,7 @@ def verify_password(plain_password, hashed_password):
     Retourne True si ça correspond, False sinon.
     """
     try:
+        ph = PasswordHasher()
         ph.verify(hashed_password, plain_password)
         return True
     except VerifyMismatchError:
