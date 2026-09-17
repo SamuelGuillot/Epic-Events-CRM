@@ -22,7 +22,7 @@ def session():
 @pytest.fixture
 def sam(session):
     """Crée un utilisateur 'sam' pour les tests."""
-    from src.utils.security import hash_password
+    from src.services.security import hash_password
 
     user = User(
         employee_number="EMP001",
