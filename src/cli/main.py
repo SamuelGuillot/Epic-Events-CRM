@@ -1,16 +1,24 @@
 import typer
+from datetime import date
+
 from src.config.database import SessionLocal
 from src.services.auth import AuthService
-from src.cli.display import display_register_result, display_login_result
-from src.services.security import clear_token
-from datetime import date
 from src.services.client import ClientService
-from src.cli.display import display_clients, display_client_result
 from src.services.contract import ContractService
+from src.inputs.user import RegisterData, LoginData
+from src.inputs.client import ClientCreateData
+from src.inputs.contract import ContractCreateData
+from src.exceptions import EpicEventsError
 from src.cli.display import (
+    display_user,
+    display_clients,
+    display_client,
     display_contracts,
-    display_contract_result,
+    display_contract,
+    display_error,
 )
+from src.services.security import clear_token, create_jwt
+
 
 app = typer.Typer(help="Epic Events CRM")
 
@@ -25,10 +33,22 @@ def register(
     department: str = typer.Option(..., prompt="Departement"),
 ):
     """Creer un nouveau compte collaborateur."""
+    data = RegisterData(
+        full_name=full_name,
+        email=email,
+        password=password,
+        department=department,
+    )
+
     with SessionLocal() as session:
-        service = AuthService(session)
-        result = service.register(full_name, email, password, department)
-        display_register_result(result)
+        try:
+            service = AuthService(session)
+            user = service.register(data)
+            token = create_jwt(user.id, user.email)
+            display_user(user)
+            typer.echo(f"JWT : {token}")
+        except EpicEventsError as e:
+            display_error(e.message)
 
 
 @app.command()
@@ -37,10 +57,17 @@ def login(
     password: str = typer.Option(..., prompt="Mot de passe", hide_input=True),
 ):
     """Se connecter au CRM."""
+    data = LoginData(email=email, password=password)
+
     with SessionLocal() as session:
-        service = AuthService(session)
-        result = service.login(email, password)
-        display_login_result(result)
+        try:
+            service = AuthService(session)
+            user = service.login(data)
+            token = create_jwt(user.id, user.email)
+            typer.echo(f"Connexion reussie, bienvenue {user.full_name} !")
+            typer.echo(f"JWT : {token}")
+        except EpicEventsError as e:
+            display_error(e.message)
 
 
 @app.command()
@@ -51,8 +78,10 @@ def logout():
     else:
         typer.echo("Vous n'etiez pas connecte(e).")
 
+
 client_app = typer.Typer(help="Commandes de gestion des clients.")
 app.add_typer(client_app, name="client")
+
 
 @client_app.command("list")
 def client_list():
@@ -61,6 +90,7 @@ def client_list():
         clients = service.list_clients()
         display_clients(clients)
 
+
 @client_app.command("create")
 def client_create(
     full_name: str = typer.Option(..., prompt="Nom complet"),
@@ -68,24 +98,25 @@ def client_create(
     phone: str = typer.Option("", prompt="Telephone (optionnel)"),
     company_name: str = typer.Option("", prompt="Societe (optionnel)"),
 ):
+    data = ClientCreateData(
+        full_name=full_name,
+        email=email,
+        phone=phone or None,
+        company_name=company_name or None,
+        first_contact_date=date.today(),
+    )
+
     with SessionLocal() as session:
-        auth_service = AuthService(session)
-        current_user = auth_service.get_current_user()
+        try:
+            auth_service = AuthService(session)
+            current_user = auth_service.get_current_user()
 
-        if not current_user:
-            typer.echo("Vous n'etes pas connecte(e). Utilisez 'login' d'abord.")
-            return
+            service = ClientService(session)
+            client = service.create_client(data, current_user)
+            display_client(client)
+        except EpicEventsError as e:
+            display_error(e.message)
 
-        client_service = ClientService(session)
-        result = client_service.create_client(
-            full_name=full_name,
-            email=email,
-            phone=phone or None,
-            company_name=company_name or None,
-            first_contact_date=date.today(),
-            current_user=current_user,
-        )
-        display_client_result(result)
 
 contract_app = typer.Typer(help="Commandes de gestion des contrats.")
 app.add_typer(contract_app, name="contract")
@@ -97,28 +128,32 @@ def contract_create(
     total_amount: float = typer.Option(..., prompt="Montant total"),
     remaining_amount: float = typer.Option(..., prompt="Montant restant a payer"),
 ):
+    data = ContractCreateData(
+        client_id=client_id,
+        total_amount=total_amount,
+        remaining_amount=remaining_amount,
+        creation_date=date.today(),
+    )
+
     with SessionLocal() as session:
-        auth_service = AuthService(session)
-        current_user = auth_service.get_current_user()
+        try:
+            auth_service = AuthService(session)
+            current_user = auth_service.get_current_user()
 
-        if not current_user:
-            typer.echo("Vous n'etes pas connecte(e). Utilisez 'login' d'abord.")
-            return
+            service = ContractService(session)
+            contract = service.create_contract(data, current_user)
+            display_contract(contract)
+        except EpicEventsError as e:
+            display_error(e.message)
 
-        contract_service = ContractService(session)
-        result = contract_service.create_contract(
-            client_id=client_id,
-            total_amount=total_amount,
-            remaining_amount=remaining_amount,
-            creation_date=date.today(),
-            current_user=current_user,
-        )
-        
-        display_contract_result(result)
 
 @contract_app.command("list")
 def contract_list():
     with SessionLocal() as session:
-        contract_service = ContractService(session)
-        contracts = contract_service.list_contracts()
+        service = ContractService(session)
+        contracts = service.list_contracts()
         display_contracts(contracts)
+
+
+if __name__ == "__main__":
+    app()

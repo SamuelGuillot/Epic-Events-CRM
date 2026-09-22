@@ -1,23 +1,24 @@
 import typer
 
 
-def display_register_result(result):
-    if result.success:
-        typer.echo(f"{result.message} !")
-        typer.echo(f"Bienvenue {result.user.full_name} (ID: {result.user.id})")
-        typer.echo(f"Matricule : {result.user.employee_number}")
-        typer.echo(f"Departement : {result.user.department.value}")
-        typer.echo(f"JWT : {result.token}")
-    else:
-        typer.echo(f"Erreur : {result.message}")
+def display_user(user):
+    typer.echo(f"ID : {user.id}")
+    typer.echo(f"Nom : {user.full_name}")
+    typer.echo(f"Email : {user.email}")
+    typer.echo(f"Matricule : {user.employee_number}")
+    typer.echo(f"Departement : {user.department.value}")
 
 
-def display_login_result(result):
-    if result.success:
-        typer.echo(f"{result.message}, bienvenue {result.user.full_name} !")
-        typer.echo(f"JWT : {result.token}")
-    else:
-        typer.echo(f"Erreur : {result.message}")
+def display_register_result(user, token):
+    typer.echo("Inscription reussie !")
+    display_user(user)
+    typer.echo(f"JWT : {token}")
+
+
+def display_login_result(user, token):
+    typer.echo(f"Connexion reussie, bienvenue {user.full_name} !")
+    typer.echo(f"JWT : {token}")
+
 
 def display_clients(clients):
     if not clients:
@@ -26,27 +27,28 @@ def display_clients(clients):
 
     typer.echo(f"{len(clients)} client(s) :")
     for client in clients:
-        typer.echo("----------------------------")
-        typer.echo(f"ID : {client.id}")
-        typer.echo(f"Nom : {client.full_name}")
-        typer.echo(f"Email : {client.email}")
-        typer.echo(f"Telephone : {client.phone or 'Non renseigne'}")
-        typer.echo(f"Societe : {client.company_name or 'Non renseigne'}")
+        typer.echo("--------------------")
+        typer.echo(f"  ID : {client.id}")
+        typer.echo(f"  Nom : {client.full_name}")
+        typer.echo(f"  Email : {client.email}")
+        typer.echo(f"  Telephone : {client.phone or 'Non renseigne'}")
+        typer.echo(f"  Societe : {client.company_name or 'Non renseigne'}")
         if client.commercial_contact:
             typer.echo(f"  Commercial : {client.commercial_contact.full_name}")
         else:
             typer.echo("  Commercial : Non assigne")
 
 
-def display_client_result(result):
-    if result.success:
-        typer.echo(f"{result.message} !")
-        typer.echo(f"ID: {result.client.id}")
-        typer.echo(f"Nom: {result.client.full_name}")
-        typer.echo(f"Email: {result.client.email}")
-        typer.echo(f"Societe: {result.client.company_name or 'Non renseigne'}")
+def display_client(client):
+    typer.echo(f"ID : {client.id}")
+    typer.echo(f"Nom : {client.full_name}")
+    typer.echo(f"Email : {client.email}")
+    typer.echo(f"Telephone : {client.phone or 'Non renseigne'}")
+    typer.echo(f"Societe : {client.company_name or 'Non renseigne'}")
+    if client.commercial_contact:
+        typer.echo(f"Commercial : {client.commercial_contact.full_name}")
     else:
-        typer.echo(f"Erreur: {result.message}")
+        typer.echo("Commercial : Non assigne")
 
 
 def display_contracts(contracts):
@@ -57,24 +59,24 @@ def display_contracts(contracts):
     typer.echo(f"{len(contracts)} contrat(s) :")
     for contract in contracts:
         typer.echo("--------------------")
-        typer.echo(f"ID: {contract.id}")
-        typer.echo(f"Client: {contract.client.full_name if contract.client else 'Inconnu'}")
-        typer.echo(f"Montant total: {contract.total_amount} EUR")
-        typer.echo(f"Reste a payer: {contract.remaining_amount} EUR")
-        typer.echo(f"Date de creation: {contract.creation_date}")
+        typer.echo(f"  ID : {contract.id}")
+        typer.echo(f"  Client : {contract.client.full_name if contract.client else 'Inconnu'}")
+        typer.echo(f"  Montant total : {contract.total_amount} €")
+        typer.echo(f"  Reste a payer : {contract.remaining_amount} €")
+        typer.echo(f"  Date de creation : {contract.creation_date}")
         statut = "Signe" if contract.status else "Non signe"
-        typer.echo(f"Statut: {statut}")
+        typer.echo(f"  Statut : {statut}")
 
 
-def display_contract_result(result):
-    if result.success:
-        typer.echo(f"{result.message} !")
-        typer.echo(f"ID: {result.contract.id}")
-        typer.echo(f"Client: {result.contract.client.full_name}")
-        typer.echo(f"Montant total: {result.contract.total_amount} EUR")
-        typer.echo(f"Reste a payer: {result.contract.remaining_amount} EUR")
-        typer.echo(f"Date: {result.contract.creation_date}")
-        statut = "Signe" if result.contract.status else "Non signe"
-        typer.echo(f"Statut: {statut}")
-    else:
-        typer.echo(f"Erreur: {result.message}")
+def display_contract(contract):
+    typer.echo(f"ID : {contract.id}")
+    typer.echo(f"Client : {contract.client.full_name}")
+    typer.echo(f"Montant total : {contract.total_amount} €")
+    typer.echo(f"Reste a payer : {contract.remaining_amount} €")
+    typer.echo(f"Date : {contract.creation_date}")
+    statut = "Signe" if contract.status else "Non signe"
+    typer.echo(f"Statut : {statut}")
+
+
+def display_error(message):
+    typer.echo(f"Erreur : {message}")

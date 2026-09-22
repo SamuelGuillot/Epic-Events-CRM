@@ -1,14 +1,7 @@
-from dataclasses import dataclass
-from src.models.contract import Contract
 from src.repositories.contract_repository import ContractRepository
 from src.repositories.client_repository import ClientRepository
-
-
-@dataclass
-class ContractResult:
-    success: bool
-    message: str
-    contract: Contract = None
+from src.inputs.contract import ContractCreateData
+from src.exceptions import ClientNotFoundError, ContractNotFoundError
 
 
 class ContractService:
@@ -20,44 +13,19 @@ class ContractService:
         return self.contract_repo.get_all()
 
     def get_contract(self, contract_id):
-        return self.contract_repo.get_by_id(contract_id)
+        contract = self.contract_repo.get_by_id(contract_id)
+        if not contract:
+            raise ContractNotFoundError(f"Contrat ID {contract_id} introuvable.")
+        return contract
 
     def list_by_client(self, client_id):
         return self.contract_repo.get_by_client(client_id)
 
-    def create_contract(self, client_id, total_amount, remaining_amount, creation_date, current_user):
-        client = self.client_repo.get_by_id(client_id)
+    def create_contract(self, data: ContractCreateData, current_user):
+        data.validate()
+
+        client = self.client_repo.get_by_id(data.client_id)
         if not client:
-            return ContractResult(success=False, message=f"Client ID {client_id} introuvable.")
+            raise ClientNotFoundError(f"Client ID {data.client_id} introuvable.")
 
-        error = self.validate_contract(total_amount, remaining_amount)
-        if error:
-            return error
-
-        contract = Contract(
-            total_amount=total_amount,
-            remaining_amount=remaining_amount,
-            creation_date=creation_date,
-            status=False,
-            client_id=client_id,
-            commercial_contact_id=current_user.id,
-        )
-        self.contract_repo.save(contract)
-
-        return ContractResult(
-            success=True,
-            message="Contrat cree avec succes",
-            contract=contract,
-        )
-
-    def validate_contract(self, total_amount, remaining_amount):
-        if total_amount <= 0:
-            return ContractResult(success=False, message="Le montant total doit etre positif.")
-
-        if remaining_amount < 0:
-            return ContractResult(success=False, message="Le montant restant ne peut pas etre negatif.")
-
-        if remaining_amount > total_amount:
-            return ContractResult(success=False, message="Le montant restant ne peut pas depasser le total.")
-
-        return None
+        return self.contract_repo.add_contract(data, current_user.id)

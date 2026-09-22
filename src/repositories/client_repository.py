@@ -20,11 +20,21 @@ class ClientRepository:
         )
 
     def search(self, name):
-        return self.session.query(Client).filter(
-            Client.full_name == name
-        ).all()
+        return (
+            self.session.query(Client)
+            .filter(Client.full_name == name)
+            .all()
+        )
 
-    def save(self, client):
+    def add_client(self, data, commercial_contact_id):
+        client = Client(
+            full_name=data.full_name,
+            email=data.email,
+            phone=data.phone,
+            company_name=data.company_name,
+            first_contact_date=data.first_contact_date,
+            commercial_contact_id=commercial_contact_id,
+        )
         self.session.add(client)
         self.session.commit()
         self.session.refresh(client)

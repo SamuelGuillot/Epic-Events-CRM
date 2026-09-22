@@ -1,106 +1,85 @@
 from datetime import date
+import pytest
 from src.services.contract import ContractService
+from src.inputs.contract import ContractCreateData
+from src.exceptions import ClientNotFoundError, ValidationError
 
 
-def test_create_contract_succes(session, sam, make_client):
+def build_contract_data(client_id, **kwargs):
+    defaults = {
+        "client_id": client_id,
+        "total_amount": 5000.0,
+        "remaining_amount": 5000.0,
+        "creation_date": date(2024, 1, 1),
+    }
+    defaults.update(kwargs)
+    return ContractCreateData(**defaults)
+
+
+def test_create_contract_success(session, sam, make_client):
     client = make_client(sam)
     service = ContractService(session)
 
-    result = service.create_contract(
-        client_id=client.id,
-        total_amount=5000.0,
-        remaining_amount=5000.0,
-        creation_date=date(2024, 1, 1),
-        current_user=sam,
-    )
+    contract = service.create_contract(build_contract_data(client.id), sam)
 
-    assert result.success is True
-    assert result.contract is not None
-    assert result.contract.total_amount == 5000.0
-    assert result.contract.remaining_amount == 5000.0
-    assert result.contract.status is False
-    assert result.contract.client_id == client.id
+    assert contract is not None
+    assert contract.total_amount == 5000.0
+    assert contract.remaining_amount == 5000.0
+    assert contract.status is False
+    assert contract.client_id == client.id
 
 
-def test_create_contract_client_introuvable(session, sam):
+def test_create_contract_client_not_found(session, sam):
     service = ContractService(session)
 
-    result = service.create_contract(
-        client_id=9999,
-        total_amount=5000.0,
-        remaining_amount=5000.0,
-        creation_date=date(2024, 1, 1),
-        current_user=sam,
-    )
-
-    assert result.success is False
-    assert result.contract is None
-    assert "introuvable" in result.message.lower()
+    with pytest.raises(ClientNotFoundError):
+        service.create_contract(build_contract_data(9999), sam)
 
 
-def test_create_contract_montant_total_negatif(session, sam, make_client):
+def test_create_contract_negative_total(session, sam, make_client):
     client = make_client(sam)
     service = ContractService(session)
 
-    result = service.create_contract(
-        client_id=client.id,
-        total_amount=-100.0,
-        remaining_amount=-100.0,
-        creation_date=date(2024, 1, 1),
-        current_user=sam,
-    )
-
-    assert result.success is False
+    with pytest.raises(ValidationError):
+        service.create_contract(
+            build_contract_data(client.id, total_amount=-100.0, remaining_amount=-100.0),
+            sam,
+        )
 
 
-def test_create_contract_montant_restant_negatif(session, sam, make_client):
+def test_create_contract_negative_remaining(session, sam, make_client):
     client = make_client(sam)
     service = ContractService(session)
 
-    result = service.create_contract(
-        client_id=client.id,
-        total_amount=5000.0,
-        remaining_amount=-500.0,
-        creation_date=date(2024, 1, 1),
-        current_user=sam,
-    )
-
-    assert result.success is False
+    with pytest.raises(ValidationError):
+        service.create_contract(
+            build_contract_data(client.id, remaining_amount=-500.0),
+            sam,
+        )
 
 
-def test_create_contract_restant_superieur_au_total(session, sam, make_client):
+def test_create_contract_remaining_above_total(session, sam, make_client):
     client = make_client(sam)
     service = ContractService(session)
 
-    result = service.create_contract(
-        client_id=client.id,
-        total_amount=1000.0,
-        remaining_amount=5000.0,
-        creation_date=date(2024, 1, 1),
-        current_user=sam,
-    )
-
-    assert result.success is False
-    assert "depasser" in result.message.lower()
+    with pytest.raises(ValidationError):
+        service.create_contract(
+            build_contract_data(client.id, total_amount=1000.0, remaining_amount=5000.0),
+            sam,
+        )
 
 
-def test_list_contracts_vide(session):
+def test_list_contracts_empty(session):
     service = ContractService(session)
     assert service.list_contracts() == []
 
 
-def test_list_contracts_avec_donnees(session, sam, make_client):
+def test_list_contracts_with_data(session, sam, make_client):
     client = make_client(sam)
     service = ContractService(session)
 
     for i in range(3):
-        service.create_contract(
-            client_id=client.id,
-            total_amount=1000.0,
-            remaining_amount=1000.0,
-            creation_date=date(2024, 1, 1),
-            current_user=sam,
-        )
+        service.create_contract(build_contract_data(client.id), sam)
 
     contracts = service.list_contracts()
     assert len(contracts) == 3

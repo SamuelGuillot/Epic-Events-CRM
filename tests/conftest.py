@@ -9,7 +9,6 @@ from src.services.security import hash_password
 
 @pytest.fixture
 def session():
-    """Crée une base SQLite en mémoire, isolée pour chaque test."""
     engine = create_engine("sqlite:///:memory:")
     Base.metadata.create_all(engine)
 
@@ -52,6 +51,5 @@ def make_client(session):
 
 @pytest.fixture
 def auth_service(session):
-    """Retourne une instance d'AuthService liée à la session de test."""
     from src.services.auth import AuthService
     return AuthService(session)
