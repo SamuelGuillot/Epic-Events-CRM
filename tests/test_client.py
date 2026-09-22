@@ -1,25 +1,8 @@
 from datetime import date
-from src.models import Client, User, Department
-from src.repositories.client_repository import ClientRepository
 from src.services.client import ClientService
-from src.services.security import hash_password
 
 
-def make_sam(session):
-    user = User(
-        employee_number="EMP001",
-        full_name="sam",
-        email="sam@mail.com",
-        password_hash=hash_password("12345678"),
-        department=Department.COMMERCIAL,
-    )
-    session.add(user)
-    session.commit()
-    return user
-
-
-def test_create_client_succes(session):
-    sam = make_sam(session)
+def test_create_client_succes(session, sam):
     service = ClientService(session)
 
     result = service.create_client(
@@ -37,8 +20,7 @@ def test_create_client_succes(session):
     assert result.client.id is not None
 
 
-def test_create_client_sans_nom(session):
-    sam = make_sam(session)
+def test_create_client_sans_nom(session, sam):
     service = ClientService(session)
 
     result = service.create_client(
@@ -54,8 +36,7 @@ def test_create_client_sans_nom(session):
     assert result.client is None
 
 
-def test_create_client_email_invalide(session):
-    sam = make_sam(session)
+def test_create_client_email_invalide(session, sam):
     service = ClientService(session)
 
     result = service.create_client(
@@ -75,8 +56,7 @@ def test_list_clients_vide(session):
     assert service.list_clients() == []
 
 
-def test_list_clients_avec_donnees(session):
-    sam = make_sam(session)
+def test_list_clients_avec_donnees(session, sam):
     service = ClientService(session)
 
     service.create_client(
@@ -98,5 +78,3 @@ def test_list_clients_avec_donnees(session):
     assert "Casey Anthony" in noms
     assert "Paul Pogba" in noms
     assert "MF Doom" in noms
-
-

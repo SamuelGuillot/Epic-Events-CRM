@@ -4,7 +4,7 @@ import datetime
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 
-SECRET_KEY = "Da_KEY"
+SECRET_KEY = "Da_KEY_qui_doit_faire_au_moins_32_caracteres_pour_la_securite"
 TOKEN_FILE = ".epic_token"
 
 def save_token(token):

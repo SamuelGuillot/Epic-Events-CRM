@@ -27,6 +27,8 @@ class Client(Base):
     updated_at = Column(DateTime, onupdate=func.now())
 
     commercial_contact = relationship("User", back_populates="clients")
+    contracts = relationship("Contract", back_populates="client")
+    events = relationship("Event", back_populates="client")
 
     def __repr__(self):
         return f"<Client(id={self.id}, full_name={self.full_name})>"

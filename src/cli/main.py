@@ -6,6 +6,11 @@ from src.services.security import clear_token
 from datetime import date
 from src.services.client import ClientService
 from src.cli.display import display_clients, display_client_result
+from src.services.contract import ContractService
+from src.cli.display import (
+    display_contracts,
+    display_contract_result,
+)
 
 app = typer.Typer(help="Epic Events CRM")
 
@@ -51,7 +56,6 @@ app.add_typer(client_app, name="client")
 
 @client_app.command("list")
 def client_list():
-    """Afficher la liste de tous les clients."""
     with SessionLocal() as session:
         service = ClientService(session)
         clients = service.list_clients()
@@ -64,7 +68,6 @@ def client_create(
     phone: str = typer.Option("", prompt="Telephone (optionnel)"),
     company_name: str = typer.Option("", prompt="Societe (optionnel)"),
 ):
-    """Creer un nouveau client."""
     with SessionLocal() as session:
         auth_service = AuthService(session)
         current_user = auth_service.get_current_user()
@@ -83,3 +86,39 @@ def client_create(
             current_user=current_user,
         )
         display_client_result(result)
+
+contract_app = typer.Typer(help="Commandes de gestion des contrats.")
+app.add_typer(contract_app, name="contract")
+
+
+@contract_app.command("create")
+def contract_create(
+    client_id: int = typer.Option(..., prompt="ID du client"),
+    total_amount: float = typer.Option(..., prompt="Montant total"),
+    remaining_amount: float = typer.Option(..., prompt="Montant restant a payer"),
+):
+    with SessionLocal() as session:
+        auth_service = AuthService(session)
+        current_user = auth_service.get_current_user()
+
+        if not current_user:
+            typer.echo("Vous n'etes pas connecte(e). Utilisez 'login' d'abord.")
+            return
+
+        contract_service = ContractService(session)
+        result = contract_service.create_contract(
+            client_id=client_id,
+            total_amount=total_amount,
+            remaining_amount=remaining_amount,
+            creation_date=date.today(),
+            current_user=current_user,
+        )
+        
+        display_contract_result(result)
+
+@contract_app.command("list")
+def contract_list():
+    with SessionLocal() as session:
+        contract_service = ContractService(session)
+        contracts = contract_service.list_contracts()
+        display_contracts(contracts)
