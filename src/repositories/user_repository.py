@@ -16,3 +16,9 @@ class UserRepository:
         self.session.commit()
         self.session.refresh(user)
         return user
+    
+    def update_user(self, user):
+        self.session.commit()
+        self.session.refresh(user)
+        return user
+        

@@ -5,8 +5,8 @@ from src.config.database import SessionLocal
 from src.services.auth import AuthService
 from src.services.client import ClientService
 from src.services.contract import ContractService
-from src.inputs.user import RegisterData, LoginData
-from src.inputs.client import ClientCreateData
+from src.inputs.user import RegisterData, LoginData, UserUpdateData
+from src.inputs.client import ClientCreateData, ClientUpdateData
 from src.inputs.contract import ContractCreateData, ContractUpdateData
 from src.exceptions import EpicEventsError
 from src.services.event import EventService
@@ -82,6 +82,32 @@ def logout():
         typer.echo("Vous n'etiez pas connecte(e).")
 
 
+@app.command("user-update")
+def user_update(
+    user_id: int = typer.Option(..., prompt="ID du collaborateur"),
+):
+    """Mettre a jour un collaborateur."""
+    with SessionLocal() as session:
+        try:
+            auth_service = AuthService(session)
+            user = auth_service.get_user(user_id)
+
+            name = typer.prompt("Nouveau nom (vide pour ne pas changer)", default="")
+            email = typer.prompt("Nouvel email (vide pour ne pas changer)", default="")
+            department = typer.prompt("Nouveau departement (vide pour ne pas changer)", default="")
+
+            data = UserUpdateData(
+                full_name=name or None,
+                email=email or None,
+                department=department or None,
+            )
+
+            user = auth_service.update_user(user_id, data)
+            display_user(user)
+        except EpicEventsError as e:
+            display_error(e.message)
+
+
 @app.command("client-list")
 def client_list():
     """Afficher la liste de tous les clients."""
@@ -114,6 +140,33 @@ def client_create(
 
             service = ClientService(session)
             client = service.create_client(data, current_user)
+            display_client(client)
+        except EpicEventsError as e:
+            display_error(e.message)
+
+@app.command("client-update")
+def client_update(
+    client_id: int = typer.Option(..., prompt="ID du client"),
+):
+    """Mettre a jour un client."""
+    with SessionLocal() as session:
+        try:
+            client_service = ClientService(session)
+            client = client_service.get_client(client_id)
+
+            name = typer.prompt("Nouveau nom (vide pour ne pas changer)", default="")
+            email = typer.prompt("Nouvel email (vide pour ne pas changer)", default="")
+            phone = typer.prompt("Nouveau telephone (vide pour ne pas changer)", default="")
+            company = typer.prompt("Nouvelle societe (vide pour ne pas changer)", default="")
+
+            data = ClientUpdateData(
+                full_name=name or None,
+                email=email or None,
+                phone=phone or None,
+                company_name=company or None,
+            )
+
+            client = client_service.update_client(client_id, data)
             display_client(client)
         except EpicEventsError as e:
             display_error(e.message)
@@ -160,19 +213,27 @@ def contract_create(
 def contract_update(
     contract_id: int = typer.Option(..., prompt="ID du contrat"),
     sign: bool = typer.Option(False, "--sign", help="Signer le contrat."),
-    total_amount: float = typer.Option(None, "--total", help="Nouveau montant total."),
-    remaining_amount: float = typer.Option(None, "--remaining", help="Nouveau montant restant."),
 ):
-    data = ContractUpdateData(
-        total_amount=total_amount,
-        remaining_amount=remaining_amount,
-        status=True if sign else None,
-    )
-
+    """Mettre a jour un contrat (montants, signature)."""
     with SessionLocal() as session:
         try:
-            service = ContractService(session)
-            contract = service.update_contract(contract_id, data)
+            contract_service = ContractService(session)
+            contract = contract_service.get_contract(contract_id)
+
+            total_amount = typer.prompt(
+                "Nouveau montant total (vide pour ne pas changer)", default=""
+            )
+            remaining_amount = typer.prompt(
+                "Nouveau montant restant (vide pour ne pas changer)", default=""
+            )
+
+            data = ContractUpdateData(
+                total_amount=float(total_amount) if total_amount else None,
+                remaining_amount=float(remaining_amount) if remaining_amount else None,
+                status=True if sign else None,
+            )
+
+            contract = contract_service.update_contract(contract_id, data)
             display_contract(contract)
         except EpicEventsError as e:
             display_error(e.message)
@@ -242,24 +303,28 @@ def event_create(
 @app.command("event-update")
 def event_update(
     event_id: int = typer.Option(..., prompt="ID de l'evenement"),
-    name: str = typer.Option(None, "--name", help="Nouveau nom."),
-    location: str = typer.Option(None, "--location", help="Nouveau lieu."),
-    attendees: int = typer.Option(None, "--attendees", help="Nouveau nombre de participants."),
-    notes: str = typer.Option(None, "--notes", help="Nouvelles notes."),
-    support_id: int = typer.Option(None, "--support", help="ID du support a assigner."),
 ):
-    data = EventUpdateData(
-        event_name=name,
-        location=location,
-        attendees_count=attendees,
-        notes=notes,
-        support_contact_id=support_id,
-    )
-
+    """Mettre a jour un evenement."""
     with SessionLocal() as session:
         try:
-            service = EventService(session)
-            event = service.update_event(event_id, data)
+            event_service = EventService(session)
+            event = event_service.get_event(event_id)
+
+            name = typer.prompt("Nouveau nom (vide pour ne pas changer)", default="")
+            location = typer.prompt("Nouveau lieu (vide pour ne pas changer)", default="")
+            attendees = typer.prompt("Nouveau nombre de participants (vide pour ne pas changer)", default="")
+            notes = typer.prompt("Nouvelles notes (vide pour ne pas changer)", default="")
+            support_id = typer.prompt("ID du support (vide pour ne pas changer)", default="")
+
+            data = EventUpdateData(
+                event_name=name or None,
+                location=location or None,
+                attendees_count=int(attendees) if attendees else None,
+                notes=notes or None,
+                support_contact_id=int(support_id) if support_id else None,
+            )
+
+            event = event_service.update_event(event_id, data)
             display_event(event)
         except EpicEventsError as e:
             display_error(e.message)

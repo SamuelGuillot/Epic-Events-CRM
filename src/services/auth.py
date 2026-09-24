@@ -9,6 +9,7 @@ from src.exceptions import (
     InvalidCredentialsError,
     EmailAlreadyUsedError,
     NotAuthenticatedError,
+    UserNotFoundError,
 )
 
 
@@ -77,3 +78,25 @@ class AuthService:
             raise NotAuthenticatedError("Utilisateur introuvable.")
 
         return user
+
+    def get_user(self, user_id):
+        user = self.user_repo.get_by_id(user_id)
+        if not user:
+            raise UserNotFoundError(f"Utilisateur ID {user_id} introuvable.")
+        return user
+
+    def update_user(self, user_id, data):
+        data.validate()
+        user = self.get_user(user_id)
+
+        if data.full_name is not None:
+            user.full_name = data.full_name
+        if data.email is not None:
+            existing = self.user_repo.get_by_email(data.email)
+            if existing and existing.id != user.id:
+                raise EmailAlreadyUsedError("Cet email est deja utilise.")
+            user.email = data.email
+        if data.department is not None:
+            user.department = Department(data.department.lower())
+
+        return self.user_repo.update_user(user)

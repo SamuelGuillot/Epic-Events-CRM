@@ -39,3 +39,8 @@ class ClientRepository:
         self.session.commit()
         self.session.refresh(client)
         return client
+
+    def update_client(self, client):
+        self.session.commit()
+        self.session.refresh(client)
+        return client
