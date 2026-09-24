@@ -36,3 +36,8 @@ class ContractRepository:
         self.session.commit()
         self.session.refresh(contract)
         return contract
+
+    def update_contract(self, contract):
+        self.session.commit()
+        self.session.refresh(contract)
+        return contract

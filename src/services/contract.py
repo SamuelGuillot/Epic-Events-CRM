@@ -1,7 +1,12 @@
 from src.repositories.contract_repository import ContractRepository
 from src.repositories.client_repository import ClientRepository
-from src.inputs.contract import ContractCreateData
-from src.exceptions import ClientNotFoundError, ContractNotFoundError
+from src.inputs.contract import ContractCreateData, ContractUpdateData
+from src.exceptions import (
+    ClientNotFoundError,
+    ContractNotFoundError,
+    ValidationError,
+)
+
 
 
 class ContractService:
@@ -29,3 +34,23 @@ class ContractService:
             raise ClientNotFoundError(f"Client ID {data.client_id} introuvable.")
 
         return self.contract_repo.add_contract(data, current_user.id)
+
+    
+    def update_contract(self, contract_id, data: ContractUpdateData):
+        contract = self.get_contract(contract_id)
+
+        if data.total_amount is not None:
+            contract.total_amount = data.total_amount
+        if data.remaining_amount is not None:
+            contract.remaining_amount = data.remaining_amount
+        if data.status is not None:
+            contract.status = data.status
+
+        if contract.remaining_amount < 0:
+            raise ValidationError("Le montant restant ne peut pas etre negatif.")
+        if contract.remaining_amount > contract.total_amount:
+            raise ValidationError(
+                "Le montant restant ne peut pas depasser le total."
+            )
+
+        return self.contract_repo.update_contract(contract)

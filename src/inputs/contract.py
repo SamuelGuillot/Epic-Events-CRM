@@ -27,3 +27,9 @@ class ContractCreateData:
 
         if self.creation_date is None:
             raise ValidationError("La date de creation est obligatoire.")
+
+@dataclass
+class ContractUpdateData:
+    total_amount: float = None
+    remaining_amount: float = None
+    status: bool = None
