@@ -1,12 +1,13 @@
 from src.repositories.contract_repository import ContractRepository
 from src.repositories.client_repository import ClientRepository
-from src.inputs.contract import ContractCreateData, ContractUpdateData
+from src.DTO.contract import ContractCreateData, ContractUpdateData
+from src.permissions import can_create_contract, can_update_contract
 from src.exceptions import (
     ClientNotFoundError,
     ContractNotFoundError,
+    PermissionDeniedError,
     ValidationError,
 )
-
 
 
 class ContractService:
@@ -27,6 +28,11 @@ class ContractService:
         return self.contract_repo.get_by_client(client_id)
 
     def create_contract(self, data: ContractCreateData, current_user):
+        if not can_create_contract(current_user):
+            raise PermissionDeniedError(
+                "Seul le departement gestion peut creer un contrat."
+            )
+
         data.validate()
 
         client = self.client_repo.get_by_id(data.client_id)
@@ -35,22 +41,20 @@ class ContractService:
 
         return self.contract_repo.add_contract(data, current_user.id)
 
-    
-    def update_contract(self, contract_id, data: ContractUpdateData):
+    def update_contract(self, contract_id, data: ContractUpdateData, current_user):
         contract = self.get_contract(contract_id)
 
-        if data.total_amount is not None:
-            contract.total_amount = data.total_amount
-        if data.remaining_amount is not None:
-            contract.remaining_amount = data.remaining_amount
-        if data.status is not None:
-            contract.status = data.status
-
-        if contract.remaining_amount < 0:
-            raise ValidationError("Le montant restant ne peut pas etre negatif.")
-        if contract.remaining_amount > contract.total_amount:
-            raise ValidationError(
-                "Le montant restant ne peut pas depasser le total."
+        if not can_update_contract(current_user, contract):
+            raise PermissionDeniedError(
+                "Vous ne pouvez pas modifier ce contrat."
             )
 
-        return self.contract_repo.update_contract(contract)
+        total = data.total_amount if data.total_amount is not None else contract.total_amount
+        remaining = data.remaining_amount if data.remaining_amount is not None else contract.remaining_amount
+
+        if remaining < 0:
+            raise ValidationError("Le montant restant ne peut pas etre negatif.")
+        if remaining > total:
+            raise ValidationError("Le montant restant ne peut pas depasser le total.")
+
+        return self.contract_repo.update_contract(contract_id, data)

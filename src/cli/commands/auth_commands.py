@@ -2,11 +2,18 @@ import typer
 
 from src.cli.app import app
 from src.config.database import SessionLocal
-from src.services.auth import AuthService
+from src.services.security.auth import AuthService
 from src.services.security import clear_token, create_jwt
-from src.inputs.user import RegisterData, LoginData, UserUpdateData
+from src.DTO.user import RegisterData, LoginData, UserUpdateData
 from src.exceptions import EpicEventsError
-from src.cli.display import display_user, display_error
+from src.cli.displays.auth_display import (
+    display_user,
+    display_register_result,
+    display_login_result,
+    display_logout_success,
+    display_logout_not_connected,
+    display_error,
+)
 
 
 @app.command()
@@ -31,8 +38,7 @@ def register(
             service = AuthService(session)
             user = service.register(data)
             token = create_jwt(user.id, user.email)
-            display_user(user)
-            typer.echo(f"JWT : {token}")
+            display_register_result(user, token)
         except EpicEventsError as e:
             display_error(e.message)
 
@@ -50,8 +56,7 @@ def login(
             service = AuthService(session)
             user = service.login(data)
             token = create_jwt(user.id, user.email)
-            typer.echo(f"Connexion reussie, bienvenue {user.full_name} !")
-            typer.echo(f"JWT : {token}")
+            display_login_result(user, token)
         except EpicEventsError as e:
             display_error(e.message)
 
@@ -60,9 +65,9 @@ def login(
 def logout():
     """Se deconnecter (supprime le token stocke)."""
     if clear_token():
-        typer.echo("Deconnexion reussie.")
+        display_logout_success()
     else:
-        typer.echo("Vous n'etiez pas connecte(e).")
+        display_logout_not_connected()
 
 
 @app.command("user-update")

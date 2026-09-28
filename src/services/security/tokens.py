@@ -18,7 +18,6 @@ def create_jwt(user_id, email):
 def decode_jwt(token):
     return jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
 
-
 def save_token(token):
     with open(TOKEN_FILE, "w") as f:
         f.write(token)

@@ -3,21 +3,24 @@ from datetime import datetime
 
 from src.cli.app import app
 from src.config.database import SessionLocal
-from src.services.auth import AuthService
-from src.services.contract import ContractService
+from src.services.security.auth import AuthService
 from src.services.event import EventService
-from src.inputs.event import EventCreateData, EventUpdateData
-from src.exceptions import EpicEventsError
-from src.cli.display import display_events, display_event, display_error
+from src.DTO.event import EventCreateData, EventUpdateData
+from src.exceptions import EpicEventsError, ValidationError
+from src.cli.displays.event_display import display_events, display_event
+from src.cli.displays.auth_display import display_error
 
 
 @app.command("event-list")
 def event_list():
     """Afficher la liste de tous les evenements."""
     with SessionLocal() as session:
-        service = EventService(session)
-        events = service.list_events()
-        display_events(events)
+        try:
+            service = EventService(session)
+            events = service.list_events()
+            display_events(events)
+        except EpicEventsError as e:
+            display_error(e.message)
 
 
 @app.command("event-create")
@@ -30,19 +33,6 @@ def event_create(
             auth_service = AuthService(session)
             current_user = auth_service.get_current_user()
 
-            contract_service = ContractService(session)
-            contract = contract_service.get_contract(contract_id)
-
-            if not contract.status:
-                display_error("Le contrat doit etre signe pour creer un evenement.")
-                return
-
-            event_service = EventService(session)
-            existing = event_service.get_event_by_contract(contract.id)
-            if existing:
-                display_error(f"Ce contrat a deja un evenement (ID {existing.id}).")
-                return
-
             event_name = typer.prompt("Nom de l'evenement")
             date_start = typer.prompt("Date de debut (YYYY-MM-DD HH:MM)")
             date_end = typer.prompt("Date de fin (YYYY-MM-DD HH:MM)")
@@ -54,11 +44,10 @@ def event_create(
                 parsed_start = datetime.strptime(date_start, "%Y-%m-%d %H:%M")
                 parsed_end = datetime.strptime(date_end, "%Y-%m-%d %H:%M")
             except ValueError:
-                display_error("Format de date invalide. Utiliser : YYYY-MM-DD HH:MM")
-                return
+                raise ValidationError("Format de date invalide. Utiliser : YYYY-MM-DD HH:MM")
 
             data = EventCreateData(
-                contract_id=contract.id,
+                contract_id=contract_id,
                 event_name=event_name,
                 event_date_start=parsed_start,
                 event_date_end=parsed_end,
@@ -67,6 +56,7 @@ def event_create(
                 notes=notes or None,
             )
 
+            event_service = EventService(session)
             event = event_service.create_event(data, current_user)
             display_event(event)
         except EpicEventsError as e:

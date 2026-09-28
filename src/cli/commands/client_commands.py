@@ -3,21 +3,25 @@ from datetime import date
 
 from src.cli.app import app
 from src.config.database import SessionLocal
-from src.services.auth import AuthService
+from src.services.security.auth import AuthService
 from src.services.client import ClientService
-from src.inputs.client import ClientCreateData, ClientUpdateData
+from src.DTO.client import ClientCreateData, ClientUpdateData
 from src.permissions import can_create_client, can_update_client
 from src.exceptions import EpicEventsError, PermissionDeniedError
-from src.cli.display import display_clients, display_client, display_error
+from src.cli.displays.client_display import display_clients, display_client
+from src.cli.displays.auth_display import display_error
 
 
 @app.command("client-list")
 def client_list():
     """Afficher la liste de tous les clients."""
     with SessionLocal() as session:
-        service = ClientService(session)
-        clients = service.list_clients()
-        display_clients(clients)
+        try:
+            service = ClientService(session)
+            clients = service.list_clients()
+            display_clients(clients)
+        except EpicEventsError as e:
+            display_error(e.message)
 
 
 @app.command("client-create")

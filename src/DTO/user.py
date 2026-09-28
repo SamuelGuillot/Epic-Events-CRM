@@ -1,6 +1,10 @@
 from dataclasses import dataclass
-from src.exceptions import ValidationError, InvalidDepartmentError, InvalidPasswordError
 from src.models.user import Department
+from src.exceptions import (
+    ValidationError,
+    InvalidDepartmentError,
+    InvalidPasswordError,
+)
 
 
 @dataclass
@@ -13,15 +17,12 @@ class RegisterData:
     def validate(self):
         if not self.full_name or not self.full_name.strip():
             raise ValidationError("Le nom complet est obligatoire.")
-
         if not self.email or "@" not in self.email or "." not in self.email:
             raise ValidationError("L'email est invalide.")
-
         if len(self.password) < 8:
             raise InvalidPasswordError(
                 "Le mot de passe doit contenir au moins 8 caracteres."
             )
-
         try:
             Department(self.department.lower())
         except ValueError:
@@ -38,9 +39,9 @@ class LoginData:
     def validate(self):
         if not self.email or "@" not in self.email:
             raise ValidationError("L'email est invalide.")
-
         if not self.password:
             raise ValidationError("Le mot de passe est obligatoire.")
+
 
 @dataclass
 class UserUpdateData:
@@ -51,10 +52,8 @@ class UserUpdateData:
     def validate(self):
         if self.full_name is not None and not self.full_name.strip():
             raise ValidationError("Le nom complet ne peut pas etre vide.")
-
         if self.email is not None and "@" not in self.email:
             raise ValidationError("L'email est invalide.")
-
         if self.department is not None:
             try:
                 Department(self.department.lower())
@@ -62,3 +61,22 @@ class UserUpdateData:
                 raise InvalidDepartmentError(
                     "Departement invalide. Choisir : gestion, commercial, support."
                 )
+
+
+@dataclass
+class UserRead:
+    id: int
+    employee_number: str
+    full_name: str
+    email: str
+    department: str
+
+    @classmethod
+    def from_model(cls, user):
+        return cls(
+            id=user.id,
+            employee_number=user.employee_number,
+            full_name=user.full_name,
+            email=user.email,
+            department=user.department.value,
+        )

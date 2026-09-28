@@ -1,6 +1,6 @@
 from src.repositories.event_repository import EventRepository
 from src.repositories.contract_repository import ContractRepository
-from src.inputs.event import EventCreateData, EventUpdateData
+from src.DTO.event import EventCreateData, EventUpdateData
 from src.exceptions import (
     ContractNotFoundError,
     EventNotFoundError,
@@ -51,20 +51,9 @@ class EventService:
                 f"Ce contrat a deja un evenement (ID {existing.id})."
             )
 
-        return self.event_repo.add_event(data, contract.client_id)
+        data.client_id = contract.client_id
+        return self.event_repo.add_event(data)
 
     def update_event(self, event_id, data: EventUpdateData):
-        event = self.get_event(event_id)
-
-        if data.event_name is not None:
-            event.event_name = data.event_name
-        if data.location is not None:
-            event.location = data.location
-        if data.attendees_count is not None:
-            event.attendees_count = data.attendees_count
-        if data.notes is not None:
-            event.notes = data.notes
-        if data.support_contact_id is not None:
-            event.support_contact_id = data.support_contact_id
-
-        return self.event_repo.update_event(event)
+        self.get_event(event_id)
+        return self.event_repo.update_event(event_id, data)
