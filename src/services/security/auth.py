@@ -24,20 +24,21 @@ class AuthService:
 
         user = self.user_repo.get_by_email(data.email)
         if not user:
-            raise InvalidCredentialsError("Email inconnu.")
+            raise InvalidCredentialsError()
 
         if not verify_password(data.password, user.password_hash):
-            raise InvalidCredentialsError("Mot de passe incorrect.")
+            raise InvalidCredentialsError()
 
         token = create_jwt(user.id, user.email)
         save_token(token)
         return user
 
+
     def register(self, data: RegisterData):
         data.validate()
 
         if self.user_repo.get_by_email(data.email):
-            raise EmailAlreadyUsedError("Cet email est deja utilise.")
+            raise EmailAlreadyUsedError(data.email)
 
         return self.create_user(data)
 
@@ -81,19 +82,19 @@ class AuthService:
     def get_current_user(self):
         token = get_token()
         if not token:
-            raise NotAuthenticatedError("Vous n'etes pas connecte(e).")
+            raise NotAuthenticatedError()
 
         try:
             payload = decode_jwt(token)
         except Exception:
-            raise NotAuthenticatedError("Session invalide ou expiree.")
+            raise NotAuthenticatedError()
 
         user_id = payload.get("user_id")
         if not user_id:
-            raise NotAuthenticatedError("Token invalide.")
+            raise NotAuthenticatedError()
 
         user = self.user_repo.get_by_id(user_id)
         if not user:
-            raise NotAuthenticatedError("Utilisateur introuvable.")
+            raise NotAuthenticatedError()
 
         return user

@@ -35,6 +35,7 @@ class ContractRead:
     id: int
     client_id: int
     client_name: str
+    commercial_contact_id: int     # ← le commercial du client
     total_amount: float
     remaining_amount: float
     creation_date: date
@@ -49,6 +50,11 @@ class ContractRead:
                 contract.client.full_name
                 if contract.client
                 else "Inconnu"
+            ),
+            commercial_contact_id=(
+                contract.client.commercial_contact_id
+                if contract.client
+                else None
             ),
             total_amount=contract.total_amount,
             remaining_amount=contract.remaining_amount,

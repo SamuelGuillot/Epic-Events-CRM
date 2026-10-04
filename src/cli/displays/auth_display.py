@@ -26,7 +26,3 @@ def display_logout_success():
 
 def display_logout_not_connected():
     typer.echo("Vous n'etiez pas connecte(e).")
-
-
-def display_error(message):
-    typer.echo(f"Erreur : {message}")

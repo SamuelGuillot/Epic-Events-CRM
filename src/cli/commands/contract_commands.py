@@ -7,10 +7,10 @@ from src.services.security.auth import AuthService
 from src.services.client import ClientService
 from src.services.contract import ContractService
 from src.DTO.contract import ContractCreateData, ContractUpdateData
-from src.permissions import can_create_contract, can_update_contract
+from src.permissions import can_create_contract, can_update_contract, can_sign_contract
 from src.exceptions import EpicEventsError, PermissionDeniedError
 from src.cli.displays.contract_display import display_contracts, display_contract
-from src.cli.displays.auth_display import display_error
+from src.cli.displays.error_display import display_error
 
 
 @app.command("contract-list")
@@ -20,9 +20,11 @@ def contract_list():
         try:
             service = ContractService(session)
             contracts = service.list_contracts()
-            display_contracts(contracts)
         except EpicEventsError as e:
-            display_error(e.message)
+            display_error(e)
+            return
+
+        display_contracts(contracts)
 
 
 @app.command("contract-create")
@@ -34,9 +36,7 @@ def contract_create():
             current_user = auth_service.get_current_user()
 
             if not can_create_contract(current_user):
-                raise PermissionDeniedError(
-                    "Seul le departement gestion peut creer un contrat."
-                )
+                raise PermissionDeniedError("creer un contrat")
 
             client_id = typer.prompt("ID du client", type=int)
 
@@ -55,9 +55,12 @@ def contract_create():
 
             contract_service = ContractService(session)
             contract = contract_service.create_contract(data, current_user)
-            display_contract(contract)
+
         except EpicEventsError as e:
-            display_error(e.message)
+            display_error(e)
+            return
+
+        display_contract(contract)
 
 
 @app.command("contract-update")
@@ -75,9 +78,10 @@ def contract_update(
             contract = contract_service.get_contract(contract_id)
 
             if not can_update_contract(current_user, contract):
-                raise PermissionDeniedError(
-                    "Vous ne pouvez pas modifier ce contrat."
-                )
+                raise PermissionDeniedError("modifier ce contrat")
+            
+            if sign and not can_sign_contract(current_user):
+                raise PermissionDeniedError("signer un contrat")
 
             total_amount = typer.prompt(
                 "Nouveau montant total (vide pour ne pas changer)", default=""
@@ -93,6 +97,9 @@ def contract_update(
             )
 
             contract = contract_service.update_contract(contract_id, data, current_user)
-            display_contract(contract)
+
         except EpicEventsError as e:
-            display_error(e.message)
+            display_error(e)
+            return
+
+        display_contract(contract)

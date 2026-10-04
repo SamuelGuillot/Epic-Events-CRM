@@ -13,11 +13,11 @@ class ClientCreateData:
 
     def validate(self):
         if not self.full_name or not self.full_name.strip():
-            raise ValidationError("Le nom complet est obligatoire.")
+            raise ValidationError("full_name", "obligatoire")
         if not self.email or "@" not in self.email:
-            raise ValidationError("L'email est invalide.")
+            raise ValidationError("email", "format invalide")
         if self.first_contact_date is None:
-            raise ValidationError("La date de premier contact est obligatoire.")
+            raise ValidationError("first_contact_date", "obligatoire")
 
 
 @dataclass
@@ -42,6 +42,7 @@ class ClientRead:
     phone: str
     company_name: str
     first_contact_date: date
+    commercial_contact_id: int
     commercial_name: str
 
     @classmethod
@@ -53,6 +54,7 @@ class ClientRead:
             phone=client.phone,
             company_name=client.company_name,
             first_contact_date=client.first_contact_date,
+            commercial_contact_id=client.commercial_contact_id,
             commercial_name=(
                 client.commercial_contact.full_name
                 if client.commercial_contact

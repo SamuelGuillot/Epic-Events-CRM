@@ -8,25 +8,15 @@ class ClientService:
     def __init__(self, session):
         self.client_repo = ClientRepository(session)
 
-    def list_clients(self):
-        return self.client_repo.get_all()
-
     def get_client(self, client_id):
         client = self.client_repo.get_by_id(client_id)
         if not client:
-            raise ClientNotFoundError(f"Client ID {client_id} introuvable.")
+            raise ClientNotFoundError(client_id)
         return client
-
-    def list_by_commercial(self, commercial_id):
-        return self.client_repo.get_by_commercial(commercial_id)
-
-    def search_clients(self, name):
-        return self.client_repo.search(name)
 
     def create_client(self, data: ClientCreateData, current_user):
         if not can_create_client(current_user):
-            raise PermissionDeniedError("Seul un commercial peut creer un client.")
-
+            raise PermissionDeniedError("creer un client")
         data.validate()
         return self.client_repo.add_client(data, current_user.id)
 
@@ -34,9 +24,7 @@ class ClientService:
         client = self.get_client(client_id)
 
         if not can_update_client(current_user, client):
-            raise PermissionDeniedError(
-                "Vous ne pouvez modifier que vos propres clients."
-            )
+            raise PermissionDeniedError("modifier ce client")
 
         data.validate()
         return self.client_repo.update_client(client_id, data)

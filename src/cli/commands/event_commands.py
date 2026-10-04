@@ -6,9 +6,14 @@ from src.config.database import SessionLocal
 from src.services.security.auth import AuthService
 from src.services.event import EventService
 from src.DTO.event import EventCreateData, EventUpdateData
-from src.exceptions import EpicEventsError, ValidationError
+from src.permissions import can_update_event, can_assign_support
+from src.exceptions import (
+    EpicEventsError,
+    PermissionDeniedError,
+    ValidationError,
+)
 from src.cli.displays.event_display import display_events, display_event
-from src.cli.displays.auth_display import display_error
+from src.cli.displays.error_display import display_error
 
 
 @app.command("event-list")
@@ -18,9 +23,11 @@ def event_list():
         try:
             service = EventService(session)
             events = service.list_events()
-            display_events(events)
         except EpicEventsError as e:
-            display_error(e.message)
+            display_error(e)
+            return
+
+        display_events(events)
 
 
 @app.command("event-create")
@@ -44,7 +51,10 @@ def event_create(
                 parsed_start = datetime.strptime(date_start, "%Y-%m-%d %H:%M")
                 parsed_end = datetime.strptime(date_end, "%Y-%m-%d %H:%M")
             except ValueError:
-                raise ValidationError("Format de date invalide. Utiliser : YYYY-MM-DD HH:MM")
+                raise ValidationError(
+                    "date",
+                    "format invalide. Utiliser YYYY-MM-DD HH:MM",
+                )
 
             data = EventCreateData(
                 contract_id=contract_id,
@@ -58,9 +68,12 @@ def event_create(
 
             event_service = EventService(session)
             event = event_service.create_event(data, current_user)
-            display_event(event)
+
         except EpicEventsError as e:
-            display_error(e.message)
+            display_error(e)
+            return
+
+        display_event(event)
 
 
 @app.command("event-update")
@@ -70,14 +83,28 @@ def event_update(
     """Mettre a jour un evenement."""
     with SessionLocal() as session:
         try:
+            auth_service = AuthService(session)
+            current_user = auth_service.get_current_user()
+
             event_service = EventService(session)
             event = event_service.get_event(event_id)
 
+            if not can_update_event(current_user, event):
+                raise PermissionDeniedError("modifier cet evenement")
+
             name = typer.prompt("Nouveau nom (vide pour ne pas changer)", default="")
             location = typer.prompt("Nouveau lieu (vide pour ne pas changer)", default="")
-            attendees = typer.prompt("Nouveau nombre de participants (vide pour ne pas changer)", default="")
+            attendees = typer.prompt(
+                "Nouveau nombre de participants (vide pour ne pas changer)",
+                default="",
+            )
             notes = typer.prompt("Nouvelles notes (vide pour ne pas changer)", default="")
-            support_id = typer.prompt("ID du support (vide pour ne pas changer)", default="")
+            support_id = typer.prompt(
+                "ID du support (vide pour ne pas changer)", default=""
+            )
+
+            if support_id and not can_assign_support(current_user):
+                raise PermissionDeniedError("assigner un support")
 
             data = EventUpdateData(
                 event_name=name or None,
@@ -87,7 +114,10 @@ def event_update(
                 support_contact_id=int(support_id) if support_id else None,
             )
 
-            event = event_service.update_event(event_id, data)
-            display_event(event)
+            event = event_service.update_event(event_id, data, current_user)
+
         except EpicEventsError as e:
-            display_error(e.message)
+            display_error(e)
+            return
+
+        display_event(event)

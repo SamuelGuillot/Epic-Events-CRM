@@ -5,15 +5,16 @@ from src.config.database import SessionLocal
 from src.services.security.auth import AuthService
 from src.services.security import clear_token, create_jwt
 from src.DTO.user import RegisterData, LoginData, UserUpdateData
-from src.exceptions import EpicEventsError
+from src.exceptions import EpicEventsError, PermissionDeniedError
+from src.permissions import can_update_user
 from src.cli.displays.auth_display import (
     display_user,
     display_register_result,
     display_login_result,
     display_logout_success,
     display_logout_not_connected,
-    display_error,
 )
+from src.cli.displays.error_display import display_error
 
 
 @app.command()
@@ -37,10 +38,12 @@ def register(
         try:
             service = AuthService(session)
             user = service.register(data)
-            token = create_jwt(user.id, user.email)
-            display_register_result(user, token)
         except EpicEventsError as e:
-            display_error(e.message)
+            display_error(e)
+            return
+
+        token = create_jwt(user.id, user.email)
+        display_register_result(user, token)
 
 
 @app.command()
@@ -55,10 +58,12 @@ def login(
         try:
             service = AuthService(session)
             user = service.login(data)
-            token = create_jwt(user.id, user.email)
-            display_login_result(user, token)
         except EpicEventsError as e:
-            display_error(e.message)
+            display_error(e)
+            return
+
+        token = create_jwt(user.id, user.email)
+        display_login_result(user, token)
 
 
 @app.command()
@@ -78,11 +83,18 @@ def user_update(
     with SessionLocal() as session:
         try:
             auth_service = AuthService(session)
+            current_user = auth_service.get_current_user()
+
+            if not can_update_user(current_user):
+                raise PermissionDeniedError("modifier un collaborateur")
+
             user = auth_service.get_user(user_id)
 
             name = typer.prompt("Nouveau nom (vide pour ne pas changer)", default="")
             email = typer.prompt("Nouvel email (vide pour ne pas changer)", default="")
-            department = typer.prompt("Nouveau departement (vide pour ne pas changer)", default="")
+            department = typer.prompt(
+                "Nouveau departement (vide pour ne pas changer)", default=""
+            )
 
             data = UserUpdateData(
                 full_name=name or None,
@@ -90,7 +102,11 @@ def user_update(
                 department=department or None,
             )
 
+            # Mise a jour
             user = auth_service.update_user(user_id, data)
-            display_user(user)
+
         except EpicEventsError as e:
-            display_error(e.message)
+            display_error(e)
+            return
+
+        display_user(user)

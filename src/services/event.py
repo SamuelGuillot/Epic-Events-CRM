@@ -1,9 +1,11 @@
 from src.repositories.event_repository import EventRepository
 from src.repositories.contract_repository import ContractRepository
 from src.DTO.event import EventCreateData, EventUpdateData
+from src.permissions import can_update_event
 from src.exceptions import (
     ContractNotFoundError,
     EventNotFoundError,
+    PermissionDeniedError,
     ValidationError,
 )
 
@@ -54,6 +56,12 @@ class EventService:
         data.client_id = contract.client_id
         return self.event_repo.add_event(data)
 
-    def update_event(self, event_id, data: EventUpdateData):
-        self.get_event(event_id)
+    def update_event(self, event_id, data: EventUpdateData, current_user):
+        event = self.get_event(event_id)
+
+        if not can_update_event(current_user, event):
+            raise PermissionDeniedError(
+                "Vous ne pouvez pas modifier cet evenement."
+            )
+
         return self.event_repo.update_event(event_id, data)

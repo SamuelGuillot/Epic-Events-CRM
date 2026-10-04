@@ -50,6 +50,8 @@ class EventRead:
     attendees_count: int
     notes: str
     contract_id: int
+    client_id: int
+    support_contact_id: int
     client_name: str
     support_name: str
 
@@ -64,6 +66,8 @@ class EventRead:
             attendees_count=event.attendees_count,
             notes=event.notes,
             contract_id=event.contract_id,
+            client_id=event.client_id,
+            support_contact_id=event.support_contact_id,
             client_name=(
                 event.client.full_name
                 if event.client
