@@ -2,6 +2,7 @@ import typer
 from datetime import datetime
 
 from src.cli.app import app
+from src.cli.decorators import has_object_permission
 from src.config.database import SessionLocal
 from src.services.security.auth import AuthService
 from src.services.event import EventService
@@ -14,6 +15,12 @@ from src.exceptions import (
 )
 from src.cli.displays.event_display import display_events, display_event
 from src.cli.displays.error_display import display_error
+
+
+def fetch_event(session, event_id):
+    """Recupere un evenement par son ID (appele par le decorateur)."""
+    service = EventService(session)
+    return service.get_event(event_id)
 
 
 @app.command("event-list")
@@ -77,47 +84,42 @@ def event_create(
 
 
 @app.command("event-update")
+@has_object_permission(can_update_event, fetch_event, "modifier cet evenement")
 def event_update(
+    current_user,
+    session,
+    event,
     event_id: int = typer.Option(..., prompt="ID de l'evenement"),
 ):
     """Mettre a jour un evenement."""
-    with SessionLocal() as session:
-        try:
-            auth_service = AuthService(session)
-            current_user = auth_service.get_current_user()
+    try:
+        name = typer.prompt("Nouveau nom (vide pour ne pas changer)", default="")
+        location = typer.prompt("Nouveau lieu (vide pour ne pas changer)", default="")
+        attendees = typer.prompt(
+            "Nouveau nombre de participants (vide pour ne pas changer)",
+            default="",
+        )
+        notes = typer.prompt("Nouvelles notes (vide pour ne pas changer)", default="")
+        support_id = typer.prompt(
+            "ID du support (vide pour ne pas changer)", default=""
+        )
 
-            event_service = EventService(session)
-            event = event_service.get_event(event_id)
+        if support_id and not can_assign_support(current_user):
+            raise PermissionDeniedError("assigner un support")
 
-            if not can_update_event(current_user, event):
-                raise PermissionDeniedError("modifier cet evenement")
+        data = EventUpdateData(
+            event_name=name or None,
+            location=location or None,
+            attendees_count=int(attendees) if attendees else None,
+            notes=notes or None,
+            support_contact_id=int(support_id) if support_id else None,
+        )
 
-            name = typer.prompt("Nouveau nom (vide pour ne pas changer)", default="")
-            location = typer.prompt("Nouveau lieu (vide pour ne pas changer)", default="")
-            attendees = typer.prompt(
-                "Nouveau nombre de participants (vide pour ne pas changer)",
-                default="",
-            )
-            notes = typer.prompt("Nouvelles notes (vide pour ne pas changer)", default="")
-            support_id = typer.prompt(
-                "ID du support (vide pour ne pas changer)", default=""
-            )
+        event_service = EventService(session)
+        event = event_service.update_event(event_id, data, current_user)
 
-            if support_id and not can_assign_support(current_user):
-                raise PermissionDeniedError("assigner un support")
+    except EpicEventsError as e:
+        display_error(e)
+        return
 
-            data = EventUpdateData(
-                event_name=name or None,
-                location=location or None,
-                attendees_count=int(attendees) if attendees else None,
-                notes=notes or None,
-                support_contact_id=int(support_id) if support_id else None,
-            )
-
-            event = event_service.update_event(event_id, data, current_user)
-
-        except EpicEventsError as e:
-            display_error(e)
-            return
-
-        display_event(event)
+    display_event(event)

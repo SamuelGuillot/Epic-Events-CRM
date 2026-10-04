@@ -125,7 +125,10 @@ def _call_command(name, **kwargs):
         if isinstance(default, typer.models.OptionInfo):
             prompt_text = default.prompt or param_name
             hide = getattr(default, "hide_input", False)
-            value = _ask_param(prompt_text, hide)
+
+            param_type = param.annotation
+
+            value = _ask_param(prompt_text, param_type, hide)
             if value is None:
                 console.print("[yellow]Annule.[/yellow]")
                 return
@@ -139,11 +142,28 @@ def _call_command(name, **kwargs):
         console.print(f"[red]Erreur : {e}[/red]")
 
 
-def _ask_param(prompt_text, hide=False):
-    """Demande une valeur a l'utilisateur."""
+def _ask_param(prompt_text, param_type, hide=False):
+    """Demande une valeur a l'utilisateur et la convertit selon le type."""
     if hide:
         return questionary.password(prompt_text).ask()
-    return questionary.text(prompt_text).ask()
+
+    value = questionary.text(prompt_text).ask()
+
+    if value is None:
+        return None
+
+    if param_type is int:
+        try:
+            return int(value)
+        except ValueError:
+            return None
+    if param_type is float:
+        try:
+            return float(value)
+        except ValueError:
+            return None
+
+    return value
 
 
 def _find_command(name):

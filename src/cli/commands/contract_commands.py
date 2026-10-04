@@ -2,8 +2,8 @@ import typer
 from datetime import date
 
 from src.cli.app import app
+from src.cli.decorators import has_permission, has_object_permission
 from src.config.database import SessionLocal
-from src.services.security.auth import AuthService
 from src.services.client import ClientService
 from src.services.contract import ContractService
 from src.DTO.contract import ContractCreateData, ContractUpdateData
@@ -11,6 +11,12 @@ from src.permissions import can_create_contract, can_update_contract, can_sign_c
 from src.exceptions import EpicEventsError, PermissionDeniedError
 from src.cli.displays.contract_display import display_contracts, display_contract
 from src.cli.displays.error_display import display_error
+
+
+def fetch_contract(session, contract_id):
+    """Recupere un contrat par son ID (appele par le decorateur)."""
+    service = ContractService(session)
+    return service.get_contract(contract_id)
 
 
 @app.command("contract-list")
@@ -28,78 +34,68 @@ def contract_list():
 
 
 @app.command("contract-create")
-def contract_create():
+@has_permission(can_create_contract, "creer un contrat")
+def contract_create(current_user, session):
     """Creer un nouveau contrat pour un client."""
-    with SessionLocal() as session:
-        try:
-            auth_service = AuthService(session)
-            current_user = auth_service.get_current_user()
+    try:
+        client_id = typer.prompt("ID du client", type=int)
 
-            if not can_create_contract(current_user):
-                raise PermissionDeniedError("creer un contrat")
+        client_service = ClientService(session)
+        client = client_service.get_client(client_id)
 
-            client_id = typer.prompt("ID du client", type=int)
+        total_amount = typer.prompt("Montant total", type=float)
+        remaining_amount = typer.prompt("Montant restant a payer", type=float)
 
-            client_service = ClientService(session)
-            client = client_service.get_client(client_id)
+        data = ContractCreateData(
+            client_id=client.id,
+            total_amount=total_amount,
+            remaining_amount=remaining_amount,
+            creation_date=date.today(),
+        )
 
-            total_amount = typer.prompt("Montant total", type=float)
-            remaining_amount = typer.prompt("Montant restant a payer", type=float)
+        contract_service = ContractService(session)
+        contract = contract_service.create_contract(data, current_user)
 
-            data = ContractCreateData(
-                client_id=client.id,
-                total_amount=total_amount,
-                remaining_amount=remaining_amount,
-                creation_date=date.today(),
-            )
+    except EpicEventsError as e:
+        display_error(e)
+        return
 
-            contract_service = ContractService(session)
-            contract = contract_service.create_contract(data, current_user)
-
-        except EpicEventsError as e:
-            display_error(e)
-            return
-
-        display_contract(contract)
+    display_contract(contract)
 
 
 @app.command("contract-update")
+@has_object_permission(can_update_contract, fetch_contract, "modifier ce contrat")
 def contract_update(
+    current_user,
+    session,
+    contract,
     contract_id: int = typer.Option(..., prompt="ID du contrat"),
     sign: bool = typer.Option(False, "--sign", help="Signer le contrat."),
 ):
     """Mettre a jour un contrat (montants, signature)."""
-    with SessionLocal() as session:
-        try:
-            auth_service = AuthService(session)
-            current_user = auth_service.get_current_user()
+    if sign and not can_sign_contract(current_user):
+        display_error(PermissionDeniedError("signer un contrat"))
+        return
 
-            contract_service = ContractService(session)
-            contract = contract_service.get_contract(contract_id)
+    try:
+        total_amount = typer.prompt(
+            "Nouveau montant total (vide pour ne pas changer)", default=""
+        )
+        remaining_amount = typer.prompt(
+            "Nouveau montant restant (vide pour ne pas changer)", default=""
+        )
 
-            if not can_update_contract(current_user, contract):
-                raise PermissionDeniedError("modifier ce contrat")
-            
-            if sign and not can_sign_contract(current_user):
-                raise PermissionDeniedError("signer un contrat")
+        data = ContractUpdateData(
+            total_amount=float(total_amount) if total_amount else None,
+            remaining_amount=float(remaining_amount) if remaining_amount else None,
+            status=True if sign else None,
+        )
 
-            total_amount = typer.prompt(
-                "Nouveau montant total (vide pour ne pas changer)", default=""
-            )
-            remaining_amount = typer.prompt(
-                "Nouveau montant restant (vide pour ne pas changer)", default=""
-            )
+        contract_service = ContractService(session)
+        contract = contract_service.update_contract(contract_id, data, current_user)
 
-            data = ContractUpdateData(
-                total_amount=float(total_amount) if total_amount else None,
-                remaining_amount=float(remaining_amount) if remaining_amount else None,
-                status=True if sign else None,
-            )
+    except EpicEventsError as e:
+        display_error(e)
+        return
 
-            contract = contract_service.update_contract(contract_id, data, current_user)
-
-        except EpicEventsError as e:
-            display_error(e)
-            return
-
-        display_contract(contract)
+    display_contract(contract)
