@@ -88,7 +88,7 @@ def event_create(
 def event_update(
     current_user,
     session,
-    event,
+    object,
     event_id: int = typer.Option(..., prompt="ID de l'evenement"),
 ):
     """Mettre a jour un evenement."""

@@ -68,7 +68,7 @@ def contract_create(current_user, session):
 def contract_update(
     current_user,
     session,
-    contract,
+    object,
     contract_id: int = typer.Option(..., prompt="ID du contrat"),
     sign: bool = typer.Option(False, "--sign", help="Signer le contrat."),
 ):

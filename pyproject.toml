@@ -1,0 +1,24 @@
+[project]
+name = "epic-events-crm"
+version = "0.1.0"
+description = "CRM interne pour Epic Events"
+authors = [
+    {name = "SamuelGuillot", email = "samuel.guillot.pro@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = ["sqlalchemy (>=2.1.3,<3.0.0)", "pyjwt (>=2.15.1,<3.0.0)", "argon2-cffi (>=25.1.0,<26.0.0)", "typer (>=0.27.2,<0.28.0)", "rich (>=15.0.0,<16.0.0)", "questionary (>=2.1.1,<3.0.0)", "sentry-sdk (>=2.71.0,<3.0.0)", "python-dotenv (>=1.2.4,<2.0.0)", "makefun (>=1.16.0,<2.0.0)"]
+
+[tool.poetry]
+package-mode = false
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^9.1.1"
+pytest-cov = "^7.1.0"
+black = "^26.5.1"
+flake8 = "^7.4.1"
+isort = "^9.0.2"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

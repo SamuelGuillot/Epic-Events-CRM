@@ -59,7 +59,7 @@ def client_create(current_user, session):
 def client_update(
     current_user,
     session,
-    client,
+    object,
     client_id: int = typer.Option(..., prompt="ID du client"),
 ):
     """Mettre a jour un client."""

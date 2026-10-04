@@ -1,11 +1,12 @@
 
 *.db
-*.sqlite3
+
+.env
 
 .epic_token
 
 venv/
-.env
+.venv/
 
 __pycache__/
 *.pyc
