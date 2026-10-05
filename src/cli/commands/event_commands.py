@@ -13,6 +13,7 @@ from src.exceptions import (
     PermissionDeniedError,
     ValidationError,
 )
+from src.config.sentry import log_error
 from src.cli.displays.event_display import display_events, display_event
 from src.cli.displays.error_display import display_error
 
@@ -31,6 +32,10 @@ def event_list():
             service = EventService(session)
             events = service.list_events()
         except EpicEventsError as e:
+            display_error(e)
+            return
+        except Exception as e:
+            log_error(e)
             display_error(e)
             return
 
@@ -77,6 +82,10 @@ def event_create(
             event = event_service.create_event(data, current_user)
 
         except EpicEventsError as e:
+            display_error(e)
+            return
+        except Exception as e:
+            log_error(e)
             display_error(e)
             return
 

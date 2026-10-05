@@ -8,6 +8,7 @@ from src.services.client import ClientService
 from src.DTO.client import ClientCreateData, ClientUpdateData
 from src.permissions import can_create_client, can_update_client
 from src.exceptions import EpicEventsError
+from src.config.sentry import log_error
 from src.cli.displays.client_display import display_clients, display_client
 from src.cli.displays.error_display import display_error
 
@@ -26,6 +27,10 @@ def client_list():
             service = ClientService(session)
             clients = service.list_clients()
         except EpicEventsError as e:
+            display_error(e)
+            return
+        except Exception as e:
+            log_error(e)
             display_error(e)
             return
 

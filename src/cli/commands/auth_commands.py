@@ -8,6 +8,7 @@ from src.DTO.user import RegisterData, LoginData, UserUpdateData
 from src.exceptions import EpicEventsError
 from src.permissions import can_update_user
 from src.cli.decorators import has_permission
+from src.config.sentry import log_error
 from src.cli.displays.auth_display import (
     display_user,
     display_register_result,
@@ -42,6 +43,10 @@ def register(
         except EpicEventsError as e:
             display_error(e)
             return
+        except Exception as e:
+            log_error(e)
+            display_error(e)
+            return
 
         token = create_jwt(user.id, user.email)
         display_register_result(user, token)
@@ -60,6 +65,10 @@ def login(
             service = AuthService(session)
             user = service.login(data)
         except EpicEventsError as e:
+            display_error(e)
+            return
+        except Exception as e:
+            log_error(e)
             display_error(e)
             return
 

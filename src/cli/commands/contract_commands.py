@@ -9,6 +9,7 @@ from src.services.contract import ContractService
 from src.DTO.contract import ContractCreateData, ContractUpdateData
 from src.permissions import can_create_contract, can_update_contract, can_sign_contract
 from src.exceptions import EpicEventsError, PermissionDeniedError
+from src.config.sentry import log_error
 from src.cli.displays.contract_display import display_contracts, display_contract
 from src.cli.displays.error_display import display_error
 
@@ -27,6 +28,10 @@ def contract_list():
             service = ContractService(session)
             contracts = service.list_contracts()
         except EpicEventsError as e:
+            display_error(e)
+            return
+        except Exception as e:
+            log_error(e)
             display_error(e)
             return
 

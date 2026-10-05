@@ -9,6 +9,7 @@ from src.exceptions import (
     NotAuthenticatedError,
     UserNotFoundError,
 )
+from src.config.sentry import log_info
 
 
 def generate_employee_number(compteur):
@@ -33,14 +34,15 @@ class AuthService:
         save_token(token)
         return user
 
-
     def register(self, data: RegisterData):
         data.validate()
 
         if self.user_repo.get_by_email(data.email):
             raise EmailAlreadyUsedError(data.email)
 
-        return self.create_user(data)
+        user = self.create_user(data)
+        log_info(f"Collaborateur cree : {user.email} ({user.department.value})")
+        return user
 
     def create_user(self, data: RegisterData):
         count = self.user_repo.session.query(User).count()
@@ -60,7 +62,7 @@ class AuthService:
     def get_user(self, user_id):
         user = self.user_repo.get_by_id(user_id)
         if not user:
-            raise UserNotFoundError(f"Utilisateur ID {user_id} introuvable.")
+            raise UserNotFoundError(user_id)
         return user
 
     def update_user(self, user_id, data):
@@ -72,12 +74,14 @@ class AuthService:
         if data.email is not None:
             existing = self.user_repo.get_by_email(data.email)
             if existing and existing.id != user.id:
-                raise EmailAlreadyUsedError("Cet email est deja utilise.")
+                raise EmailAlreadyUsedError(data.email)
             user.email = data.email
         if data.department is not None:
             user.department = Department(data.department.lower())
 
-        return self.user_repo.update_user(user)
+        user = self.user_repo.update_user(user)
+        log_info(f"Collaborateur modifie : {user.email} ({user.department.value})")
+        return user
 
     def get_current_user(self):
         token = get_token()

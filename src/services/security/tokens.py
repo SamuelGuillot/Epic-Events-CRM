@@ -1,8 +1,11 @@
 import os
 import jwt
 import datetime
+from dotenv import load_dotenv
 
-SECRET_KEY = "Da_KEY_qui_doit_faire_au_moins_32_caracteres_pour_la_securite"
+load_dotenv()
+
+SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 TOKEN_FILE = ".epic_token"
 
 
@@ -17,6 +20,7 @@ def create_jwt(user_id, email):
 
 def decode_jwt(token):
     return jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+
 
 def save_token(token):
     with open(TOKEN_FILE, "w") as f:
