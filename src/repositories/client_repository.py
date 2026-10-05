@@ -1,5 +1,5 @@
-from src.models.client import Client
 from src.DTO.client import ClientRead
+from src.models.client import Client
 
 
 class ClientRepository:
@@ -14,7 +14,11 @@ class ClientRepository:
         return results
 
     def get_by_id(self, client_id):
-        client = self.session.query(Client).filter(Client.id == client_id).first()
+        client = (
+            self.session.query(Client)
+            .filter(Client.id == client_id)
+            .first()
+        )
         if not client:
             return None
         return ClientRead.from_model(client)
@@ -32,7 +36,11 @@ class ClientRepository:
         return results
 
     def search(self, name):
-        clients = self.session.query(Client).filter(Client.full_name == name).all()
+        clients = (
+            self.session.query(Client)
+            .filter(Client.full_name == name)
+            .all()
+        )
         results = []
         for client in clients:
             results.append(ClientRead.from_model(client))
@@ -53,7 +61,11 @@ class ClientRepository:
         return ClientRead.from_model(client)
 
     def update_client(self, client_id, data):
-        client = self.session.query(Client).filter(Client.id == client_id).first()
+        client = (
+            self.session.query(Client)
+            .filter(Client.id == client_id)
+            .first()
+        )
         if not client:
             return None
 

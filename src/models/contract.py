@@ -1,6 +1,14 @@
-from sqlalchemy import Column, Integer, Float, Boolean, Date, DateTime, ForeignKey
-from sqlalchemy.sql import func
+from sqlalchemy import (
+    Boolean,
+    Column,
+    Date,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+)
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
 
 from src.models.base import Base
 
@@ -30,9 +38,23 @@ class Contract(Base):
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, onupdate=func.now())
 
-    client = relationship("Client", back_populates="contracts")
-    commercial_contact = relationship("User", back_populates="contracts_as_commercial")
-    event = relationship("Event", back_populates="contract", uselist=False)
+    client = relationship(
+        "Client",
+        back_populates="contracts",
+    )
+    commercial_contact = relationship(
+        "User",
+        back_populates="contracts_as_commercial",
+    )
+    event = relationship(
+        "Event",
+        back_populates="contract",
+        uselist=False,
+    )
 
     def __repr__(self):
-        return f"<Contract(id={self.id}, client_id={self.client_id}, total={self.total_amount})>"
+        return (
+            f"<Contract(id={self.id}, "
+            f"client_id={self.client_id}, "
+            f"total={self.total_amount})>"
+        )

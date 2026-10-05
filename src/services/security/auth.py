@@ -1,15 +1,20 @@
-from src.DTO.user import RegisterData, LoginData
-from src.models.user import User, Department
-from src.repositories.user_repository import UserRepository
-from src.services.security.tokens import create_jwt, save_token, get_token, decode_jwt
-from src.services.security.password import hash_password, verify_password
+from src.config.sentry import log_info
+from src.DTO.user import LoginData, RegisterData
 from src.exceptions import (
-    InvalidCredentialsError,
     EmailAlreadyUsedError,
+    InvalidCredentialsError,
     NotAuthenticatedError,
     UserNotFoundError,
 )
-from src.config.sentry import log_info
+from src.models.user import Department, User
+from src.repositories.user_repository import UserRepository
+from src.services.security.password import hash_password, verify_password
+from src.services.security.tokens import (
+    create_jwt,
+    decode_jwt,
+    get_token,
+    save_token,
+)
 
 
 def generate_employee_number(compteur):
@@ -41,7 +46,10 @@ class AuthService:
             raise EmailAlreadyUsedError(data.email)
 
         user = self.create_user(data)
-        log_info(f"Collaborateur cree : {user.email} ({user.department.value})")
+        log_info(
+            f"Collaborateur cree : {user.email} "
+            f"({user.department.value})"
+        )
         return user
 
     def create_user(self, data: RegisterData):
@@ -80,7 +88,10 @@ class AuthService:
             user.department = Department(data.department.lower())
 
         user = self.user_repo.update_user(user)
-        log_info(f"Collaborateur modifie : {user.email} ({user.department.value})")
+        log_info(
+            f"Collaborateur modifie : {user.email} "
+            f"({user.department.value})"
+        )
         return user
 
     def get_current_user(self):

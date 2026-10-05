@@ -1,10 +1,10 @@
 from makefun import wraps
 
-from src.config.database import SessionLocal
-from src.services.security.auth import AuthService
-from src.exceptions import EpicEventsError, PermissionDeniedError
 from src.cli.displays.error_display import display_error
+from src.config.database import SessionLocal
 from src.config.sentry import log_error
+from src.exceptions import EpicEventsError, PermissionDeniedError
+from src.services.security.auth import AuthService
 
 
 def has_permission(permission, action):

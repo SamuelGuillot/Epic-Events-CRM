@@ -1,9 +1,10 @@
 import inspect
-import typer
-import questionary
-from rich.console import Console
-from src.cli.app import app
 
+import questionary
+import typer
+from rich.console import Console
+
+from src.cli.app import app
 
 console = Console()
 

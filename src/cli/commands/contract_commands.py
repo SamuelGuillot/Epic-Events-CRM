@@ -1,17 +1,28 @@
-import typer
 from datetime import date
 
+import typer
+
 from src.cli.app import app
-from src.cli.decorators import has_permission, has_object_permission
+from src.cli.decorators import (
+    has_object_permission,
+    has_permission,
+)
+from src.cli.displays.contract_display import (
+    display_contract,
+    display_contracts,
+)
+from src.cli.displays.error_display import display_error
 from src.config.database import SessionLocal
+from src.config.sentry import log_error
+from src.DTO.contract import ContractCreateData, ContractUpdateData
+from src.exceptions import EpicEventsError, PermissionDeniedError
+from src.permissions import (
+    can_create_contract,
+    can_sign_contract,
+    can_update_contract,
+)
 from src.services.client import ClientService
 from src.services.contract import ContractService
-from src.DTO.contract import ContractCreateData, ContractUpdateData
-from src.permissions import can_create_contract, can_update_contract, can_sign_contract
-from src.exceptions import EpicEventsError, PermissionDeniedError
-from src.config.sentry import log_error
-from src.cli.displays.contract_display import display_contracts, display_contract
-from src.cli.displays.error_display import display_error
 
 
 def fetch_contract(session, contract_id, **kwargs):
@@ -49,7 +60,9 @@ def contract_create(current_user, session):
         client = client_service.get_client(client_id)
 
         total_amount = typer.prompt("Montant total", type=float)
-        remaining_amount = typer.prompt("Montant restant a payer", type=float)
+        remaining_amount = typer.prompt(
+            "Montant restant a payer", type=float
+        )
 
         data = ContractCreateData(
             client_id=client.id,
@@ -69,13 +82,21 @@ def contract_create(current_user, session):
 
 
 @app.command("contract-update")
-@has_object_permission(can_update_contract, fetch_contract, "modifier ce contrat")
+@has_object_permission(
+    can_update_contract,
+    fetch_contract,
+    "modifier ce contrat",
+)
 def contract_update(
     current_user,
     session,
     object,
-    contract_id: int = typer.Option(..., prompt="ID du contrat"),
-    sign: bool = typer.Option(False, "--sign", help="Signer le contrat."),
+    contract_id: int = typer.Option(
+        ..., prompt="ID du contrat"
+    ),
+    sign: bool = typer.Option(
+        False, "--sign", help="Signer le contrat."
+    ),
 ):
     """Mettre a jour un contrat (montants, signature)."""
     if sign and not can_sign_contract(current_user):
@@ -84,20 +105,28 @@ def contract_update(
 
     try:
         total_amount = typer.prompt(
-            "Nouveau montant total (vide pour ne pas changer)", default=""
+            "Nouveau montant total (vide pour ne pas changer)",
+            default="",
         )
         remaining_amount = typer.prompt(
-            "Nouveau montant restant (vide pour ne pas changer)", default=""
+            "Nouveau montant restant (vide pour ne pas changer)",
+            default="",
         )
 
         data = ContractUpdateData(
-            total_amount=float(total_amount) if total_amount else None,
-            remaining_amount=float(remaining_amount) if remaining_amount else None,
+            total_amount=(
+                float(total_amount) if total_amount else None
+            ),
+            remaining_amount=(
+                float(remaining_amount) if remaining_amount else None
+            ),
             status=True if sign else None,
         )
 
         contract_service = ContractService(session)
-        contract = contract_service.update_contract(contract_id, data, current_user)
+        contract = contract_service.update_contract(
+            contract_id, data, current_user
+        )
 
     except EpicEventsError as e:
         display_error(e)

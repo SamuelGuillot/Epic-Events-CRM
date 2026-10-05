@@ -1,4 +1,5 @@
 import os
+
 import sentry_sdk
 from dotenv import load_dotenv
 
@@ -14,6 +15,7 @@ def init_sentry():
         traces_sample_rate=0,
         environment=os.getenv("ENV", "development"),
     )
+
 
 def log_info(message):
     """Envoie un message d'information a Sentry."""

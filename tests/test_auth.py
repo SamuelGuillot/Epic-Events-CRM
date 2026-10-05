@@ -1,6 +1,6 @@
 import pytest
 from src.models import User, Department
-from src.inputs.user import RegisterData, LoginData
+from src.DTO.user import RegisterData, LoginData
 from src.exceptions import (
     EmailAlreadyUsedError,
     InvalidCredentialsError,

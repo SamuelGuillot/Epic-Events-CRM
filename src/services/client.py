@@ -1,7 +1,7 @@
-from src.repositories.client_repository import ClientRepository
 from src.DTO.client import ClientCreateData, ClientUpdateData
-from src.permissions import can_create_client, can_update_client
 from src.exceptions import ClientNotFoundError, PermissionDeniedError
+from src.permissions import can_create_client, can_update_client
+from src.repositories.client_repository import ClientRepository
 
 
 class ClientService:

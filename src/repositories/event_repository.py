@@ -1,5 +1,5 @@
-from src.models.event import Event
 from src.DTO.event import EventRead
+from src.models.event import Event
 
 
 class EventRepository:

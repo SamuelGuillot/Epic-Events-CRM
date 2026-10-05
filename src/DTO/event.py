@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
+
 from src.exceptions import ValidationError
 
 
@@ -28,7 +29,9 @@ class EventCreateData:
                 "La date de fin ne peut pas etre avant la date de debut."
             )
         if self.attendees_count is not None and self.attendees_count < 0:
-            raise ValidationError("Le nombre de participants ne peut pas etre negatif.")
+            raise ValidationError(
+                "Le nombre de participants ne peut pas etre negatif."
+                )
 
 
 @dataclass

@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import date
+
 from src.exceptions import ValidationError
 
 
@@ -16,9 +17,13 @@ class ContractCreateData:
         if self.total_amount is None or self.total_amount <= 0:
             raise ValidationError("Le montant total doit etre positif.")
         if self.remaining_amount is None or self.remaining_amount < 0:
-            raise ValidationError("Le montant restant ne peut pas etre negatif.")
+            raise ValidationError(
+                "Le montant restant ne peut pas etre negatif."
+            )
         if self.remaining_amount > self.total_amount:
-            raise ValidationError("Le montant restant ne peut pas depasser le total.")
+            raise ValidationError(
+                "Le montant restant ne peut pas depasser le total."
+            )
         if self.creation_date is None:
             raise ValidationError("La date de creation est obligatoire.")
 
@@ -35,7 +40,7 @@ class ContractRead:
     id: int
     client_id: int
     client_name: str
-    commercial_contact_id: int     # ← le commercial du client
+    commercial_contact_id: int
     total_amount: float
     remaining_amount: float
     creation_date: date

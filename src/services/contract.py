@@ -1,14 +1,21 @@
-from src.repositories.contract_repository import ContractRepository
-from src.repositories.client_repository import ClientRepository
-from src.DTO.contract import ContractCreateData, ContractUpdateData
-from src.permissions import can_create_contract, can_update_contract, can_sign_contract
+from src.config.sentry import log_info
+from src.DTO.contract import (
+    ContractCreateData,
+    ContractUpdateData,
+)
 from src.exceptions import (
     ClientNotFoundError,
     ContractNotFoundError,
     PermissionDeniedError,
     ValidationError,
 )
-from src.config.sentry import log_info
+from src.permissions import (
+    can_create_contract,
+    can_sign_contract,
+    can_update_contract,
+)
+from src.repositories.client_repository import ClientRepository
+from src.repositories.contract_repository import ContractRepository
 
 
 class ContractService:
@@ -38,9 +45,16 @@ class ContractService:
         if not client:
             raise ClientNotFoundError(data.client_id)
 
-        return self.contract_repo.add_contract(data, current_user.id)
+        return self.contract_repo.add_contract(
+            data, current_user.id
+        )
 
-    def update_contract(self, contract_id, data: ContractUpdateData, current_user):
+    def update_contract(
+        self,
+        contract_id,
+        data: ContractUpdateData,
+        current_user,
+    ):
         contract = self.get_contract(contract_id)
 
         if not can_update_contract(current_user, contract):
@@ -49,18 +63,37 @@ class ContractService:
         if data.status is True and not can_sign_contract(current_user):
             raise PermissionDeniedError("signer un contrat")
 
-        total = data.total_amount if data.total_amount is not None else contract.total_amount
-        remaining = data.remaining_amount if data.remaining_amount is not None else contract.remaining_amount
+        total = (
+            data.total_amount
+            if data.total_amount is not None
+            else contract.total_amount
+        )
+        remaining = (
+            data.remaining_amount
+            if data.remaining_amount is not None
+            else contract.remaining_amount
+        )
 
         if remaining < 0:
-            raise ValidationError("remaining_amount", "ne peut pas etre negatif")
+            raise ValidationError(
+                "remaining_amount",
+                "ne peut pas etre negatif",
+            )
         if remaining > total:
-            raise ValidationError("remaining_amount", "ne peut pas depasser le total")
+            raise ValidationError(
+                "remaining_amount",
+                "ne peut pas depasser le total",
+            )
 
         was_signed = contract.status
-        contract = self.contract_repo.update_contract(contract_id, data)
+        contract = self.contract_repo.update_contract(
+            contract_id, data
+        )
 
         if data.status is True and not was_signed:
-            log_info(f"Contrat #{contract.id} signe par {current_user.email}")
+            log_info(
+                f"Contrat #{contract.id} "
+                f"signe par {current_user.email}"
+            )
 
         return contract

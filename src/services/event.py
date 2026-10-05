@@ -1,13 +1,13 @@
-from src.repositories.event_repository import EventRepository
-from src.repositories.contract_repository import ContractRepository
 from src.DTO.event import EventCreateData, EventUpdateData
-from src.permissions import can_update_event
 from src.exceptions import (
     ContractNotFoundError,
     EventNotFoundError,
     PermissionDeniedError,
     ValidationError,
 )
+from src.permissions import can_update_event
+from src.repositories.contract_repository import ContractRepository
+from src.repositories.event_repository import EventRepository
 
 
 class EventService:

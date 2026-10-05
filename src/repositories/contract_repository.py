@@ -1,5 +1,5 @@
-from src.models.contract import Contract
 from src.DTO.contract import ContractRead
+from src.models.contract import Contract
 
 
 class ContractRepository:

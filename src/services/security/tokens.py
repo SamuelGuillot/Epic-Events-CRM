@@ -1,7 +1,9 @@
-import os
-import jwt
 import datetime
+import os
+
+import jwt
 from dotenv import load_dotenv
+
 
 load_dotenv()
 
@@ -13,7 +15,10 @@ def create_jwt(user_id, email):
     payload = {
         "user_id": user_id,
         "email": email,
-        "exp": datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=1),
+        "exp": (
+            datetime.datetime.now(datetime.timezone.utc)
+            + datetime.timedelta(hours=1)
+        ),
     }
     return jwt.encode(payload, SECRET_KEY, algorithm="HS256")
 

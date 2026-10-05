@@ -1,16 +1,23 @@
-import typer
 from datetime import date
 
+import typer
+
 from src.cli.app import app
-from src.cli.decorators import has_permission, has_object_permission
-from src.config.database import SessionLocal
-from src.services.client import ClientService
-from src.DTO.client import ClientCreateData, ClientUpdateData
-from src.permissions import can_create_client, can_update_client
-from src.exceptions import EpicEventsError
-from src.config.sentry import log_error
-from src.cli.displays.client_display import display_clients, display_client
+from src.cli.decorators import (
+    has_object_permission,
+    has_permission,
+)
+from src.cli.displays.client_display import (
+    display_client,
+    display_clients,
+)
 from src.cli.displays.error_display import display_error
+from src.config.database import SessionLocal
+from src.config.sentry import log_error
+from src.DTO.client import ClientCreateData, ClientUpdateData
+from src.exceptions import EpicEventsError
+from src.permissions import can_create_client, can_update_client
+from src.services.client import ClientService
 
 
 def fetch_client(session, client_id, **kwargs):
@@ -60,18 +67,32 @@ def client_create(current_user, session):
 
 
 @app.command("client-update")
-@has_object_permission(can_update_client, fetch_client, "modifier ce client")
+@has_object_permission(
+    can_update_client,
+    fetch_client,
+    "modifier ce client",
+)
 def client_update(
     current_user,
     session,
     object,
-    client_id: int = typer.Option(..., prompt="ID du client"),
+    client_id: int = typer.Option(
+        ..., prompt="ID du client"
+    ),
 ):
     """Mettre a jour un client."""
-    name = typer.prompt("Nouveau nom (vide pour ne pas changer)", default="")
-    email = typer.prompt("Nouvel email (vide pour ne pas changer)", default="")
-    phone = typer.prompt("Nouveau telephone (vide pour ne pas changer)", default="")
-    company = typer.prompt("Nouvelle societe (vide pour ne pas changer)", default="")
+    name = typer.prompt(
+        "Nouveau nom (vide pour ne pas changer)", default=""
+    )
+    email = typer.prompt(
+        "Nouvel email (vide pour ne pas changer)", default=""
+    )
+    phone = typer.prompt(
+        "Nouveau telephone (vide pour ne pas changer)", default=""
+    )
+    company = typer.prompt(
+        "Nouvelle societe (vide pour ne pas changer)", default=""
+    )
 
     data = ClientUpdateData(
         full_name=name or None,
