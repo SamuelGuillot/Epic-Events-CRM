@@ -13,7 +13,7 @@ from src.cli.displays.contract_display import display_contracts, display_contrac
 from src.cli.displays.error_display import display_error
 
 
-def fetch_contract(session, contract_id):
+def fetch_contract(session, contract_id, **kwargs):
     """Recupere un contrat par son ID (appele par le decorateur)."""
     service = ContractService(session)
     return service.get_contract(contract_id)

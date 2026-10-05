@@ -17,7 +17,7 @@ from src.cli.displays.event_display import display_events, display_event
 from src.cli.displays.error_display import display_error
 
 
-def fetch_event(session, event_id):
+def fetch_event(session, event_id, **kwargs):
     """Recupere un evenement par son ID (appele par le decorateur)."""
     service = EventService(session)
     return service.get_event(event_id)

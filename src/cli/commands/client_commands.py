@@ -12,7 +12,7 @@ from src.cli.displays.client_display import display_clients, display_client
 from src.cli.displays.error_display import display_error
 
 
-def fetch_client(session, client_id):
+def fetch_client(session, client_id, **kwargs):
     """Recupere un client par son ID (appele par le decorateur)."""
     service = ClientService(session)
     return service.get_client(client_id)

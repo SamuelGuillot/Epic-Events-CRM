@@ -10,3 +10,7 @@ venv/
 
 __pycache__/
 *.pyc
+
+__pycache__/
+*.pyc
+migrations/**/__pycache__/
