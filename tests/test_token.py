@@ -1,13 +1,13 @@
 import pytest
 
 from src.services.security.tokens import (
-    TOKEN_FILE,
     clear_token,
     create_jwt,
     decode_jwt,
     get_token,
     save_token,
 )
+
 
 def test_create_jwt_returns_token():
     token = create_jwt(1, "sam@mail.com")

@@ -15,13 +15,8 @@ class ContractCreateData:
         if self.client_id is None:
             raise ValidationError("client_id", "obligatoire")
         if self.total_amount is None or self.total_amount <= 0:
-            raise ValidationError(
-                "total_amount", "doit etre positif"
-            )
-        if (
-            self.remaining_amount is None
-            or self.remaining_amount < 0
-        ):
+            raise ValidationError("total_amount", "doit etre positif")
+        if self.remaining_amount is None or self.remaining_amount < 0:
             raise ValidationError(
                 "remaining_amount", "ne peut pas etre negatif"
             )
@@ -58,9 +53,7 @@ class ContractRead:
             id=contract.id,
             client_id=contract.client_id,
             client_name=(
-                contract.client.full_name
-                if contract.client
-                else "Inconnu"
+                contract.client.full_name if contract.client else "Inconnu"
             ),
             commercial_contact_id=(
                 contract.client.commercial_contact_id

@@ -30,3 +30,17 @@ line_length = 79
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.coverage.run]
+omit = [
+    "run.py",
+    "src/cli/*",
+    "src/cli/commands/*",
+    "src/cli/displays/*",
+    "src/cli/decorators.py",
+    "src/cli/app.py",
+    "src/config/database.py",
+    "src/config/sentry.py",
+    "migrations/*",
+    "tests/*",
+]

@@ -46,16 +46,12 @@ class EventService:
 
         existing = self.event_repo.get_by_contract(contract.id)
         if existing:
-            raise EventAlreadyExistsError(
-                contract.id, existing.id
-            )
+            raise EventAlreadyExistsError(contract.id, existing.id)
 
         data.client_id = contract.client_id
         return self.event_repo.add_event(data)
 
-    def update_event(
-        self, event_id, data: EventUpdateData, current_user
-    ):
+    def update_event(self, event_id, data: EventUpdateData, current_user):
         event = self.get_event(event_id)
 
         if not can_update_event(current_user, event):

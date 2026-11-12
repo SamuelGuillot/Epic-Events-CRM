@@ -21,22 +21,15 @@ class EventCreateData:
         if not self.event_name or not self.event_name.strip():
             raise ValidationError("event_name", "obligatoire")
         if self.event_date_start is None:
-            raise ValidationError(
-                "event_date_start", "obligatoire"
-            )
+            raise ValidationError("event_date_start", "obligatoire")
         if self.event_date_end is None:
-            raise ValidationError(
-                "event_date_end", "obligatoire"
-            )
+            raise ValidationError("event_date_end", "obligatoire")
         if self.event_date_end < self.event_date_start:
             raise ValidationError(
                 "event_date_end",
                 "doit etre apres la date de debut",
             )
-        if (
-            self.attendees_count is not None
-            and self.attendees_count < 0
-        ):
+        if self.attendees_count is not None and self.attendees_count < 0:
             raise ValidationError(
                 "attendees_count",
                 "ne peut pas etre negatif",
@@ -81,9 +74,7 @@ class EventRead:
             client_id=event.client_id,
             support_contact_id=event.support_contact_id,
             client_name=(
-                event.client.full_name
-                if event.client
-                else "Inconnu"
+                event.client.full_name if event.client else "Inconnu"
             ),
             support_name=(
                 event.support_contact.full_name

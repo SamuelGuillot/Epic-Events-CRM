@@ -84,9 +84,7 @@ def kate(session):
 
 @pytest.fixture
 def make_client(session):
-    def _make_client(
-        sam, name="Casey Anthony", email="casey@mail.com"
-    ):
+    def _make_client(sam, name="Casey Anthony", email="casey@mail.com"):
         client = Client(
             full_name=name,
             email=email,
@@ -114,9 +112,7 @@ def make_contract(session, dawn):
 
         if signed:
             update = ContractUpdateData(status=True)
-            service.contract_repo.update_contract(
-                contract.id, update
-            )
+            service.contract_repo.update_contract(contract.id, update)
 
         return service.get_contract(contract.id)
 
@@ -143,12 +139,8 @@ def make_event(session):
         event = service.create_event(data, current_user)
 
         if support:
-            update = EventUpdateData(
-                support_contact_id=support.id
-            )
-            service.event_repo.update_event(
-                event.id, update
-            )
+            update = EventUpdateData(support_contact_id=support.id)
+            service.event_repo.update_event(event.id, update)
             event = service.get_event(event.id)
 
         return event
@@ -159,4 +151,5 @@ def make_event(session):
 @pytest.fixture
 def auth_service(session):
     from src.services.security.auth import AuthService
+
     return AuthService(session)

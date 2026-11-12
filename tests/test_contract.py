@@ -1,5 +1,4 @@
 from datetime import date
-
 import pytest
 
 from src.DTO.contract import (
@@ -30,9 +29,7 @@ def test_create_contract_success(session, sam, dawn, make_client):
     client = make_client(sam)
     service = ContractService(session)
 
-    contract = service.create_contract(
-        build_contract_data(client.id), dawn
-    )
+    contract = service.create_contract(build_contract_data(client.id), dawn)
 
     assert contract is not None
     assert contract.total_amount == 5000.0
@@ -45,9 +42,7 @@ def test_create_contract_client_not_found(session, dawn):
     service = ContractService(session)
 
     with pytest.raises(ClientNotFoundError):
-        service.create_contract(
-            build_contract_data(9999), dawn
-        )
+        service.create_contract(build_contract_data(9999), dawn)
 
 
 def test_create_contract_remaining_above_total(
@@ -67,22 +62,16 @@ def test_create_contract_remaining_above_total(
         )
 
 
-def test_create_contract_permission_denied(
-    session, sam, make_client
-):
+def test_create_contract_permission_denied(session, sam, make_client):
     """Un commercial ne peut pas creer de contrat."""
     client = make_client(sam)
     service = ContractService(session)
 
     with pytest.raises(PermissionDeniedError):
-        service.create_contract(
-            build_contract_data(client.id), sam
-        )
+        service.create_contract(build_contract_data(client.id), sam)
 
 
-def test_get_contract_success(
-    session, sam, dawn, make_client, make_contract
-):
+def test_get_contract_success(session, sam, dawn, make_client, make_contract):
     client = make_client(sam)
     contract = make_contract(client)
     service = ContractService(session)
@@ -106,21 +95,16 @@ def test_list_contracts_empty(session):
     assert service.list_contracts() == []
 
 
-def test_list_contracts_with_data(
-    session, sam, dawn, make_client
-):
+def test_list_contracts_with_data(session, sam, dawn, make_client):
     client = make_client(sam)
     service = ContractService(session)
 
     for i in range(3):
-        service.create_contract(
-            build_contract_data(client.id), dawn
-        )
+        service.create_contract(build_contract_data(client.id), dawn)
 
     contracts = service.list_contracts()
 
     assert len(contracts) == 3
-
 
 
 def test_list_by_client_empty(session, sam, make_client):
@@ -130,16 +114,12 @@ def test_list_by_client_empty(session, sam, make_client):
     assert service.list_by_client(client.id) == []
 
 
-def test_list_by_client_with_data(
-    session, sam, dawn, make_client
-):
+def test_list_by_client_with_data(session, sam, dawn, make_client):
     client = make_client(sam)
     service = ContractService(session)
 
     for i in range(2):
-        service.create_contract(
-            build_contract_data(client.id), dawn
-        )
+        service.create_contract(build_contract_data(client.id), dawn)
 
     contracts = service.list_by_client(client.id)
 
@@ -163,9 +143,7 @@ def test_update_contract_amounts(
     assert updated.remaining_amount == 1000.0
 
 
-def test_update_contract_sign(
-    session, sam, dawn, make_client, make_contract
-):
+def test_update_contract_sign(session, sam, dawn, make_client, make_contract):
     client = make_client(sam)
     contract = make_contract(client, signed=False)
     service = ContractService(session)
@@ -176,9 +154,7 @@ def test_update_contract_sign(
     assert updated.status is True
 
 
-def test_update_contract_sign_denied(
-    session, sam, make_client, make_contract
-):
+def test_update_contract_sign_denied(session, sam, make_client, make_contract):
     """Un commercial ne peut pas signer."""
     client = make_client(sam)
     contract = make_contract(client, signed=False)
