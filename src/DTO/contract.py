@@ -13,19 +13,25 @@ class ContractCreateData:
 
     def validate(self):
         if self.client_id is None:
-            raise ValidationError("L'ID du client est obligatoire.")
+            raise ValidationError("client_id", "obligatoire")
         if self.total_amount is None or self.total_amount <= 0:
-            raise ValidationError("Le montant total doit etre positif.")
-        if self.remaining_amount is None or self.remaining_amount < 0:
             raise ValidationError(
-                "Le montant restant ne peut pas etre negatif."
+                "total_amount", "doit etre positif"
+            )
+        if (
+            self.remaining_amount is None
+            or self.remaining_amount < 0
+        ):
+            raise ValidationError(
+                "remaining_amount", "ne peut pas etre negatif"
             )
         if self.remaining_amount > self.total_amount:
             raise ValidationError(
-                "Le montant restant ne peut pas depasser le total."
+                "remaining_amount",
+                "ne peut pas depasser le total",
             )
         if self.creation_date is None:
-            raise ValidationError("La date de creation est obligatoire.")
+            raise ValidationError("creation_date", "obligatoire")
 
 
 @dataclass

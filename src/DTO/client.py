@@ -30,9 +30,9 @@ class ClientUpdateData:
 
     def validate(self):
         if self.full_name is not None and not self.full_name.strip():
-            raise ValidationError("Le nom complet ne peut pas etre vide.")
+            raise ValidationError("full_name", "ne peut pas etre vide")
         if self.email is not None and "@" not in self.email:
-            raise ValidationError("L'email est invalide.")
+            raise ValidationError("email", "format invalide")
 
 
 @dataclass

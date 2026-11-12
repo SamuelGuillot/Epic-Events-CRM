@@ -1,9 +1,10 @@
 from src.DTO.event import EventCreateData, EventUpdateData
 from src.exceptions import (
     ContractNotFoundError,
+    ContractNotSignedError,
+    EventAlreadyExistsError,
     EventNotFoundError,
     PermissionDeniedError,
-    ValidationError,
 )
 from src.permissions import can_update_event
 from src.repositories.contract_repository import ContractRepository
@@ -21,7 +22,7 @@ class EventService:
     def get_event(self, event_id):
         event = self.event_repo.get_by_id(event_id)
         if not event:
-            raise EventNotFoundError(f"Evenement ID {event_id} introuvable.")
+            raise EventNotFoundError(event_id)
         return event
 
     def get_event_by_contract(self, contract_id):
@@ -38,30 +39,26 @@ class EventService:
 
         contract = self.contract_repo.get_by_id(data.contract_id)
         if not contract:
-            raise ContractNotFoundError(
-                f"Contrat ID {data.contract_id} introuvable."
-            )
+            raise ContractNotFoundError(data.contract_id)
 
         if not contract.status:
-            raise ValidationError(
-                "Le contrat doit etre signe pour creer un evenement."
-            )
+            raise ContractNotSignedError(contract.id)
 
         existing = self.event_repo.get_by_contract(contract.id)
         if existing:
-            raise ValidationError(
-                f"Ce contrat a deja un evenement (ID {existing.id})."
+            raise EventAlreadyExistsError(
+                contract.id, existing.id
             )
 
         data.client_id = contract.client_id
         return self.event_repo.add_event(data)
 
-    def update_event(self, event_id, data: EventUpdateData, current_user):
+    def update_event(
+        self, event_id, data: EventUpdateData, current_user
+    ):
         event = self.get_event(event_id)
 
         if not can_update_event(current_user, event):
-            raise PermissionDeniedError(
-                "Vous ne pouvez pas modifier cet evenement."
-            )
+            raise PermissionDeniedError("modifier cet evenement")
 
         return self.event_repo.update_event(event_id, data)
